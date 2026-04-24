@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4"><i class="fas fa-users"></i> Мои семьи</h2>
+
+    {% if created_families %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-crown"></i> Семьи, которые я создал</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for family in created_families %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ family.family_name }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            Статус: {% if family.status %}Публичная{% else %}Приватная{% endif %}
+                                        </small>
+                                    </p>
+                                    <a href="{{ url_for('family_page', family_id=family.id) }}" class="btn btn-sm btn-success">
+                                        Перейти
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if member_families %}
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-user-friends"></i> Семьи, в которых я состою</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for family in member_families %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ family.family_name }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            Создатель: {{ family.creator }}
+                                        </small>
+                                    </p>
+                                    <a href="{{ url_for('family_page', family_id=family.id) }}" class="btn btn-sm btn-info">
+                                        Перейти
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if not created_families and not member_families %}
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle"></i> У вас пока нет семей.
+            <a href="{{ url_for('create_family') }}" class="alert-link">Создайте первую семью!</a>
+        </div>
+    {% endif %}
+
+    <div class="mt-4 text-center">
+        <a href="{{ url_for('create_family') }}" class="btn btn-success btn-lg rounded-pill px-5">
+            <i class="fas fa-plus"></i> Создать новую семью
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap 4 + иконки + кастомные стили (зеленая свежая тема) -->
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+          crossorigin="anonymous">
+    <!-- Font Awesome 6 (иконки для поиска, логотипа, соцсетей) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ---------- ОБЩИЕ ЗЕЛЕНЫЕ СВЕТЛЫЕ ТОНА ---------- */
+        body {
+            background: linear-gradient(145deg, #efffeb 0%, #e0f5da 100%);
+            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Прижимаем футер */
+        .wrapper {
+            flex: 1;
+        }
+
+        /* ---------- ВЕРХНЕЕ МЕНЮ: СВЕТЛО-ЗЕЛЕНАЯ ЛИСТВА ---------- */
+        /* Меню теперь имеет фон цвета молодой листвы, нежно и гармонично */
+        .navbar-light.bg-leaf {
+            background-color: #d9f0cf !important;   /* светлый лиственный зеленый */
+            box-shadow: 0 8px 20px rgba(60, 100, 40, 0.1);
+            border-bottom: 1px solid #b8daaa;
+            padding: 0.6rem 1rem;
+        }
+
+        /* Логотип — зелёный акцент, свежий */
+        .logo-icon-nav {
+            background: #2f8243;
+            width: 44px;
+            height: 44px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 12px rgba(47, 130, 67, 0.25);
+            transition: 0.2s;
+        }
+        .logo-icon-nav i {
+            font-size: 26px;
+            color: white;
+        }
+        .navbar-brand h2 {
+            font-weight: 700;
+            background: linear-gradient(135deg, #1a6630, #3d9b52);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+            margin-bottom: 0;
+            font-size: 1.8rem;
+        }
+        .navbar-brand:hover {
+            opacity: 0.9;
+        }
+
+        .navbar-brand {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px;
+        }
+
+        .navbar-brand h2 {
+            margin-bottom: 0 !important;
+            line-height: 1.2 !important;
+        }
+
+        .logo-icon-nav {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            line-height: 0;
+        }
+
+        .logo-icon-nav img {
+            display: block;
+            vertical-align: middle;
+        }
+
+        /* ---------- СТРОКА ПОИСКА ПО ЦЕНТРУ (адаптивная, красивая) ---------- */
+        .search-wrapper {
+            flex: 1;
+            max-width: 480px;
+            margin: 0 20px;
+        }
+        .search-form {
+            width: 100%;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            border: none;
+            background: white;
+            border-radius: 60px;
+            padding: 10px 20px 10px 48px;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03), inset 0 1px 2px rgba(0,0,0,0.02);
+            transition: all 0.25s;
+            border: 1px solid #cae3c0;
+            font-weight: 400;
+            color: #1c3a24;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #6ab04c;
+            box-shadow: 0 0 0 3px rgba(106, 176, 76, 0.2);
+            background-color: #ffffff;
+        }
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #5f9e4e;
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
+        .search-btn {
+            position: absolute;
+            right: 6px;
+            top: 4px;
+            bottom: 4px;
+            background: #eef7e9;
+            border: none;
+            border-radius: 50px;
+            padding: 0 20px;
+            font-weight: 500;
+            color: #2c6e3c;
+            font-size: 0.85rem;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .search-btn:hover {
+            background: #ddeed4;
+            color: #1f5730;
+        }
+
+        /* Кнопки входа / регистрации (аккуратные, зелёная гамма) */
+        .btn-leaf-outline {
+            border: 1.5px solid #3c8b50;
+            background: transparent;
+            color: #2a6b3c;
+            border-radius: 40px;
+            padding: 6px 22px;
+            font-weight: 600;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .btn-leaf-outline:hover {
+            background: #e3f3dd;
+            border-color: #2b7842;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(55, 125, 60, 0.15);
+        }
+        .btn-leaf-solid {
+            background: linear-gradient(95deg, #368a48, #4eac60);
+            border: none;
+            color: white;
+            border-radius: 40px;
+            padding: 6px 26px;
+            font-weight: 600;
+            transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .btn-leaf-solid:hover {
+            background: linear-gradient(95deg, #2c723c, #429a53);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(62, 138, 70, 0.25);
+            color: white;
+        }
+
+        /* Основной блок контента (пустой шаблон, только для вставки) */
+        .content-block {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(2px);
+            border-radius: 32px;
+            padding: 2rem 2rem;
+            margin: 2rem 0 3rem;
+            box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(100, 150, 80, 0.3);
+            min-height: 55vh;
+        }
+
+        .container {
+            max-width: 1400px !important
+        }
+
+        /* Футер – тёмно-изумрудный (как просили, низ) */
+        .footer-emerald {
+            background-color: #0a2f1f;
+            color: #cfebd4;
+            padding: 2rem 0 1.5rem;
+            margin-top: 1.5rem;
+            border-top: 1px solid #2b6e3c;
+        }
+        .footer-emerald a {
+            color: #bde5c4;
+            transition: 0.2s;
+        }
+        .footer-emerald a:hover {
+            color: white;
+            text-decoration: none;
+        }
+        .border-top-light {
+            border-top: 1px solid #2b5a3a;
+        }
+        .social-icons i {
+            font-size: 1.4rem;
+            margin: 0 8px;
+            transition: 0.2s;
+            color: #c0e0c8;
+        }
+        .social-icons i:hover {
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        /* Адаптивность: на маленьких экранах поиск перестраивается */
+        @media (max-width: 992px) {
+            .search-wrapper {
+                margin: 12px 0;
+                max-width: 100%;
+                order: 3;
+                width: 100%;
+            }
+            .navbar .container {
+                flex-wrap: wrap;
+            }
+            .navbar-collapse {
+                flex-basis: 100%;
+            }
+            .auth-buttons {
+                margin-left: auto;
+            }
+        }
+        @media (max-width: 768px) {
+            .navbar-brand h2 {
+                font-size: 1.3rem;
+            }
+            .content-block {
+                padding: 1.5rem;
+            }
+            .search-input {
+                padding: 8px 18px 8px 44px;
+            }
+        }
+    </style>
+    <title>Семейное древо</title>
+</head>
+<body>
+
+<div class="wrapper">
+    <header>
+        <!-- ВЕРХНЕЕ МЕНЮ - цвет свежей листвы (светло-зеленый), убраны все навигационные ссылки, только логотип, поиск по центру, кнопки входа/регистрации -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-leaf fixed-top">
+            <div class="container">
+                <!-- Логотип (слева) -->
+                <a class="navbar-brand" href="/">
+                    <div href="/" class="logo-icon-nav" style="background: none; box-shadow: none;">
+                        <img src="/static/img/icon.png" alt="Лого" style="width: 42px; height: 42px; border-radius: 21px;">
+                    </div>
+                    <h2 class="d-none d-sm-inline-block">Семейное древо</h2>
+                    <h2 class="d-inline d-sm-none">Семейное древо</h2>
+                </a>
+
+                <!-- Кнопка для мобильного меню (только для схлопывания, но ссылок всё равно нет, оставим на случай если понадобится) -->
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <!-- ЦЕНТРАЛЬНАЯ СТРОКА ПОИСКА (в будущем реализует поиск по сайту) -->
+                    <div class="search-wrapper mx-auto">
+                        <form class="search-form" action="#" method="get" onsubmit="event.preventDefault(); performSearch();">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="search-input" id="globalSearchInput" placeholder="Поиск: семьи, личности, пользователи" aria-label="Поиск">
+                            <button type="submit" class="search-btn">Найти</button>
+                        </form>
+                    </div>
+                    
+                    <!-- КНОПКИ ВХОДА И РЕГИСТРАЦИИ (справа) -->
+                    {% if current_user.is_authenticated %}
+                        <a class="navbar-brand" href="/logout">{{ current_user.name }}</a>
+                    {% else %}
+                        <div class="auth-buttons ml-auto">
+                        <a href="/login" class="btn btn-leaf-outline mr-2">
+                            <i class="fas fa-sign-in-alt mr-1"></i> Войти
+                        </a>
+                        <a href="/register" class="btn btn-leaf-solid">
+                            <i class="fas fa-user-plus mr-1"></i> Регистрация
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+        <!-- Отступ под фиксированный навбар, чтобы контент не перекрывался -->
+        <div style="height: 88px;"></div>
+    </header>
+
+    <!-- ОСНОВНОЕ ТЕЛО: ПУСТОЙ БЛОК ДЛЯ ДИНАМИЧЕСКОЙ ВСТАВКИ -->
+    <main role="main" class="container">
+        <div class="content-block">
+            {% block content %}
+            <!-- Этот блок будет заменяться содержимым других страниц.
+                 Сейчас здесь красивая заглушка, которую легко заменить на реальный контент. -->
+            <div class="text-center py-5 my-2">
+                <i class="fas fa-leaf fa-4x" style="color: #569f5e; opacity: 0.7;"></i>
+                <h3 class="mt-3" style="color: #256f38; font-weight: 500;">Область для контента</h3>
+                <p class="text-muted" style="color: #4a6b50 !important;">Сюда будет подставляться код страниц: главная, каталог, статьи, личный кабинет и т.д.</p>
+                <div class="alert alert-light border-success mt-4" style="background: #f0fcec; max-width: 550px; margin: 0 auto; border-radius: 28px;">
+                    <i class="fas fa-code-branch mr-2"></i>  Динамическая вставка через шаблонизатор (Jinja2 / Django)
+                </div>
+            </div>
+            {% endblock %}
+        </div>
+    </main>
+</div>
+
+<!-- КРАСИВЫЙ ФУТЕР (ТЁМНО-ИЗУМРУДНЫЙ) -->
+<footer class="footer-emerald">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-5 mb-4 mb-md-0">
+                <div class="d-flex align-items-center">
+                    <div class="logo-icon-nav" style="background: none; box-shadow: none;">
+                        <img src="/static/img/icon.png" alt="Лого" style="width: 36px; height: 36px; border-radius: 18px;">
+                    </div>
+                    <h5 class="mb-0 font-weight-light">Семейное древо</h5>
+                </div>
+                <p class="mt-3 small" style="opacity: 0.85;">Помогаем создавать истории семей</p>
+                <div class="social-icons mt-2">
+                    <a href="#" aria-label="VK"><i class="fab fa-vk"></i></a>
+                    <a href="#" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4 mb-md-0">
+                <h6 class="text-uppercase mb-3" style="color: #c0e8cc; font-weight: 600;">Информация</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#" class="text-reset">О платформе</a></li>
+                    <li class="mt-2"><a href="#" class="text-reset">Об авторах</a></li>
+                    <li class="mt-2"><a href="#" class="text-reset">Правила сообщества</a></li>
+                    <li class="mt-2"><a href="#" class="text-reset">Помощь</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-uppercase mb-3" style="color: #c0e8cc; font-weight: 600;">Контакты</h6>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-envelope mr-2"></i> MikeBklv@yandex.ru</li>
+                    <li class="mt-2"><i class="fas fa-phone-alt mr-2"></i> +7 (985) 618-06-07</li>
+                    <li class="mt-2"><i class="fas fa-map-marker-alt mr-2"></i> Москва, Ореховый Б-р, 35с1</li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-top-light pt-3 mt-3 text-center small">
+            &copy; 2026 Семейное древо — все права не защищены. Сохраните историю своей семьи.
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap и вспомогательные скрипты -->
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+</body>
+</html>

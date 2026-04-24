@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header text-white text-center rounded-top-4" style="background: linear-gradient(135deg, #2f8243, #4eac60);">
+                    <h3 class="mb-0">
+                        <i class="fas fa-users"></i> Создание новой семьи
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- Вывод flash-сообщений -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('create_family') }}">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Поле "Название семьи" -->
+                        <div class="form-group mb-4">
+                            <label for="family_name" class="form-label fw-bold">
+                                <i class="fas fa-tree"></i> {{ form.family_name.label }}
+                            </label>
+                            {{ form.family_name(class="form-control form-control-lg rounded-pill" + (" is-invalid" if form.family_name.errors else ""), id="family_name") }}
+                            {% if form.family_name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.family_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Придумайте уникальное название для вашей семьи</small>
+                        </div>
+
+                        <!-- Поле "Публичная семья" -->
+                        <div class="form-group mb-4">
+                            <div class="form-check">
+                                {{ form.status(class="form-check-input", id="status") }}
+                                <label class="form-check-label" for="status">
+                                    {{ form.status.label.text }}
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                Публичные семьи могут видеть другие пользователи и отправлять запросы на вступление
+                            </small>
+                        </div>
+
+                        <!-- Кнопка отправки -->
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-success btn-lg rounded-pill", style="background: linear-gradient(135deg, #2f8243, #4eac60); border: none;") }}
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center bg-white border-0 rounded-bottom-4 pb-4">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt"></i> Вы станете создателем и администратором семьи
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 30px -10px rgba(0,0,0,0.15) !important;
+    }
+    .form-check-input:checked {
+        background-color: #2f8243;
+        border-color: #2f8243;
+    }
+    input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(47, 130, 67, 0.25);
+        border-color: #4eac60;
+    }
+</style>
+{% endblock %}

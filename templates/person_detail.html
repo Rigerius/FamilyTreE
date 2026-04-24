@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm rounded-4">
+        <div class="card-header text-white rounded-top-4" style="background: linear-gradient(135deg, #2f8243, #4eac60);">
+            <h4 class="mb-0">
+                {% if person.gender == 'male' %}
+                    <i class="fas fa-mars"></i>
+                {% else %}
+                    <i class="fas fa-venus"></i>
+                {% endif %}
+                {{ person.full_name }}
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-info-circle"></i> Основная информация</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <th>Пол:</th>
+                            <td>{% if person.gender == 'male' %}Мужской{% else %}Женский{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>Статус:</th>
+                            <td>{% if person.status == 'living' %}Живой{% else %}Умерший{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>Дата рождения:</th>
+                            <td>{{ person.birth_date[:10] if person.birth_date else 'Не указана' }}</td>
+                        </tr>
+                        {% if person.death_date %}
+                        <tr>
+                            <th>Дата смерти:</th>
+                            <td>{{ person.death_date[:10] }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>Возраст:</th>
+                            <td>{{ person.age if person.age else 'Не указан' }} лет</td>
+                        </tr>
+                        <tr>
+                            <th>Место рождения:</th>
+                            <td>{{ person.birth_place if person.birth_place else 'Не указано' }}</td>
+                        </tr>
+                        {% if person.death_place %}
+                        <tr>
+                            <th>Место смерти:</th>
+                            <td>{{ person.death_place }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-heart"></i> Семейные связи</h5>
+                    <table class="table table-borderless">
+                        {% if person.spouses %}
+                        <tr>
+                            <th>Супруг(и):</th>
+                            <td>
+                                {% for spouse_id in person.spouses %}
+                                    {% set spouse = persons.get(spouse_id) %}
+                                    {% if spouse %}
+                                        <a href="{{ url_for('person_detail', family_id=family.id, person_id=spouse_id) }}">
+                                            {{ spouse.full_name }}
+                                        </a>{% if not loop.last %}, {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endif %}
+
+                        {% if person.parents %}
+                        <tr>
+                            <th>Родители:</th>
+                            <td>
+                                {% for parent_id in person.parents %}
+                                    {% set parent = persons.get(parent_id) %}
+                                    {% if parent %}
+                                        <a href="{{ url_for('person_detail', family_id=family.id, person_id=parent_id) }}">
+                                            {{ parent.full_name }}
+                                        </a>{% if not loop.last %}, {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endif %}
+
+                        {% if person.children %}
+                        <tr>
+                            <th>Дети:</th>
+                            <td>
+                                {% for child_id in person.children %}
+                                    {% set child = persons.get(child_id) %}
+                                    {% if child %}
+                                        <a href="{{ url_for('person_detail', family_id=family.id, person_id=child_id) }}">
+                                            {{ child.full_name }}
+                                        </a>{% if not loop.last %}, {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endif %}
+
+                        {% if not person.spouses and not person.parents and not person.children %}
+                        <tr>
+                            <td colspan="2" class="text-muted">Нет добавленных связей</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            {% if person.biography %}
+                <hr>
+                <h5><i class="fas fa-align-left"></i> Дополнительная информация</h5>
+                <p>{{ person.biography }}</p>
+            {% endif %}
+        </div>
+        <div class="card-footer bg-white">
+            <a href="{{ url_for('family_page', family_id=family.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Назад к семье
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

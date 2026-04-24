@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm rounded-4">
+                <div class="card-header bg-success text-white rounded-top-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus"></i> Добавление родственника в семью "{{ family.family_name }}"
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="addPersonForm">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Основная информация -->
+                        <div class="form-group mb-3">
+                            <label>{{ form.full_name.label }}</label>
+                            {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
+                            {% for error in form.full_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label>{{ form.gender.label }}</label>
+                                    {{ form.gender(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label>{{ form.status.label }}</label>
+                                    {{ form.status(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label>{{ form.birth_date.label }}</label>
+                                    {{ form.birth_date(class="form-control", type="date") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label>{{ form.death_date.label }}</label>
+                                    {{ form.death_date(class="form-control", type="date") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label>{{ form.birth_place.label }}</label>
+                                    {{ form.birth_place(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label>{{ form.death_place.label }}</label>
+                                    {{ form.death_place(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>{{ form.biography.label }}</label>
+                            {{ form.biography(class="form-control") }}
+                        </div>
+
+                        <hr>
+                        <h5><i class="fas fa-link"></i> Семейные связи</h5>
+                        <p class="text-muted small">Можно заполнить несколько полей одновременно. Удерживайте Ctrl (Cmd) для выбора нескольких.</p>
+
+                        <!-- Супруги -->
+                        <div class="form-group mb-3">
+                            <label>{{ form.spouses_ids.label }}</label>
+                            {{ form.spouses_ids(class="form-control", id="spouses_ids", size=4, multiple=True) }}
+                            <small class="form-text text-muted">
+                                <i class="fas fa-heart"></i> Выберите супруга/супругу (связь будет взаимной)
+                            </small>
+                        </div>
+
+                        <!-- Родители (максимум 2) -->
+                        <div class="form-group mb-3">
+                            <label>{{ form.parents_ids.label }}</label>
+                            {{ form.parents_ids(class="form-control", id="parents_ids", size=4, multiple=True) }}
+                            <small class="form-text text-muted">
+                                <i class="fas fa-female"></i> <i class="fas fa-male"></i>
+                                Выберите родителей (не более 2). Создаваемый человек станет их ребёнком
+                            </small>
+                        </div>
+
+                        <!-- Дети -->
+                        <div class="form-group mb-3">
+                            <label>{{ form.children_ids.label }}</label>
+                            {{ form.children_ids(class="form-control", id="children_ids", size=4, multiple=True) }}
+                            <small class="form-text text-muted">
+                                <i class="fas fa-baby"></i>
+                                Выберите детей. Создаваемый человек станет их родителем
+                            </small>
+                        </div>
+
+                        <div class="alert alert-info" id="relation_info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Как это работает:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li><strong>Супруг(и)</strong> - связь устанавливается в обе стороны</li>
+                                <li><strong>Родители</strong> - создаваемый человек становится ребёнком выбранных</li>
+                                <li><strong>Дети</strong> - создаваемый человек становится родителем выбранных</li>
+                                <li>Можно комбинировать: например, добавить человека как супруга И одновременно как родителя</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-success btn-lg") }}
+                            <a href="{{ url_for('family_page', family_id=family.id) }}" class="btn btn-outline-secondary">
+                                Отмена
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Валидация: родителей не может быть больше 2
+    const parentsSelect = document.getElementById('parents_ids');
+
+    parentsSelect.addEventListener('change', function() {
+        const selected = Array.from(this.selectedOptions);
+        if (selected.length > 2) {
+            alert('Нельзя выбрать более 2 родителей!');
+            // Снимаем последний выбранный
+            for (let i = 0; i < this.options.length; i++) {
+                if (this.options[i].selected && selected.indexOf(this.options[i]) === selected.length - 1) {
+                    this.options[i].selected = false;
+                    break;
+                }
+            }
+        }
+    });
+</script>
+
+<style>
+    /* Стили для множественного выбора */
+    select[multiple] {
+        min-height: 120px;
+    }
+
+    select[multiple] option {
+        padding: 8px 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+    select[multiple] option:checked {
+        background-color: #2f8243 linear-gradient(0deg, #2f8243, #2f8243);
+        color: white;
+    }
+
+    select[multiple] option:hover {
+        background-color: #e8f5e9;
+    }
+</style>
+{% endblock %}

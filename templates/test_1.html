@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div>Тестовый текст</div>
+{% if current_user.is_authenticated %}
+<a href="/create_family" class="btn btn-leaf-outline mr-2">
+    <i class="fas fa-address-book mr-1"></i> Добавить семью
+</a>
+<a class="nav-link" href="{{ url_for('my_families') }}">
+    <i class="fas fa-users"></i> Мои семьи
+</a>
+{% endif %}
+{% endblock %}
