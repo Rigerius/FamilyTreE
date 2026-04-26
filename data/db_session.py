@@ -19,16 +19,14 @@ def global_init(db_file):
     conn_str = f'sqlite:///{db_file.strip()}?check_same_thread=False'
     print(f"Подключение к базе данных по адресу {conn_str}")
 
-    # НАСТРОЙКИ ПУЛА СОЕДИНЕНИЙ ДЛЯ SQLite
-    # SQLite не поддерживает традиционный пул, но эти настройки помогут
     engine = sa.create_engine(
         conn_str,
         echo=False,
-        pool_size=20,           # Размер пула (макс. постоянных соединений)
-        max_overflow=40,        # Дополнительные соединения при нагрузке
-        pool_timeout=60,        # Таймаут ожидания соединения (секунды)
-        pool_recycle=3600,      # Пересоздавать соединения каждый час
-        pool_pre_ping=True      # Проверять соединение перед использованием
+        pool_size=20,
+        max_overflow=40,
+        pool_timeout=60,
+        pool_recycle=3600,
+        pool_pre_ping=True
     )
     __factory = orm.sessionmaker(bind=engine)
 
