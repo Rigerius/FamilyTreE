@@ -2,24 +2,36 @@
 
 {% block content %}
 <div>Тестовый текст</div>
+
 {% if current_user.is_authenticated %}
-<a href="/create_family" class="btn btn-leaf-outline mr-2">
-    <i class="fas fa-address-book mr-1"></i> Добавить семью
-</a>
-<a class="nav-link" href="{{ url_for('my_families') }}">
-    <i class="fas fa-users"></i> Мои семьи
-</a>
-{% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
+    <div class="mt-3">
+        <a href="/create_family" class="btn btn-leaf-outline mr-2">
+            <i class="fas fa-address-book mr-1"></i> Добавить семью
+        </a>
+        <a class="btn btn-leaf-outline mr-2" href="{{ url_for('my_families') }}">
+            <i class="fas fa-users"></i> Мои семьи
+        </a>
+        <a class="btn btn-leaf-outline mr-2" href="{{ url_for('profile') }}">
+            <i class="fas fa-user"></i> Профиль
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+{% else %}
+    <div class="mt-4">
+        <p>Добро пожаловать! Пожалуйста, войдите или зарегистрируйтесь.</p>
+    </div>
 {% endif %}
+
 {% endblock %}
