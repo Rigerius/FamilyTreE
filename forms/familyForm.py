@@ -97,3 +97,87 @@ class AddPersonForm(FlaskForm):
     )
 
     submit = SubmitField('Добавить родственника')
+
+
+class EditPersonForm(FlaskForm):
+    """Форма для редактирования родственника"""
+    full_name = StringField(
+        'ФИО',
+        validators=[
+            DataRequired(message='Введите ФИО'),
+            Length(min=2, max=100, message='ФИО должно быть от 2 до 100 символов')
+        ],
+        render_kw={"placeholder": "Иванов Иван Иванович"}
+    )
+
+    gender = SelectField(
+        'Пол',
+        choices=[
+            ('male', 'Мужской'),
+            ('female', 'Женский')
+        ],
+        validators=[DataRequired(message='Выберите пол')]
+    )
+
+    status = SelectField(
+        'Статус',
+        choices=[
+            ('living', 'Живой'),
+            ('deceased', 'Умерший')
+        ],
+        validators=[DataRequired(message='Выберите статус')]
+    )
+
+    birth_date = DateField(
+        'Дата рождения',
+        validators=[Optional()],
+        format='%Y-%m-%d',
+        render_kw={"placeholder": "ГГГГ-ММ-ДД"}
+    )
+
+    death_date = DateField(
+        'Дата смерти',
+        validators=[Optional()],
+        format='%Y-%m-%d',
+        render_kw={"placeholder": "ГГГГ-ММ-ДД"}
+    )
+
+    birth_place = StringField(
+        'Место рождения',
+        validators=[Optional(), Length(max=200)],
+        render_kw={"placeholder": "Город, страна"}
+    )
+
+    death_place = StringField(
+        'Место смерти',
+        validators=[Optional(), Length(max=200)],
+        render_kw={"placeholder": "Город, страна"}
+    )
+
+    biography = TextAreaField(
+        'Дополнительная информация',
+        validators=[Optional(), Length(max=2000)],
+        render_kw={"placeholder": "Биография, достижения...", "rows": 4}
+    )
+
+    # Поля для связей
+    spouses_ids = SelectMultipleField(
+        'Супруг(и)',
+        choices=[],
+        validators=[Optional()]
+    )
+
+    parents_ids = SelectMultipleField(
+        'Родители (максимум 2)',
+        choices=[],
+        validators=[Optional()]
+    )
+
+    children_ids = SelectMultipleField(
+        'Дети',
+        choices=[],
+        validators=[Optional()]
+    )
+
+    submit = SubmitField('Сохранить изменения')
+    delete = SubmitField('Удалить родственника', render_kw={"class": "btn-danger"})
