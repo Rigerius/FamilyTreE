@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm rounded-4 mb-4">
+        <div class="card-header text-white rounded-top-4" style="background: linear-gradient(135deg, #2f8243, #4eac60);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="mb-0">
+                    <i class="fas fa-tree"></i> Семейное дерево: {{ family.family_name }}
+                </h4>
+                <div class="mt-2 mt-sm-0">
+                    <a href="{{ url_for('family_page', family_id=family.id) }}" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-left"></i> Назад к семье
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Вкладки для разных видов визуализации -->
+            <ul class="nav nav-tabs" id="treeTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="graph-tab" data-toggle="tab" href="#graph" role="tab">
+                        <i class="fas fa-project-diagram"></i> Граф связей
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="text-tab" data-toggle="tab" href="#text" role="tab">
+                        <i class="fas fa-list-tree"></i> Текстовое дерево
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="stats-tab" data-toggle="tab" href="#stats" role="tab">
+                        <i class="fas fa-chart-pie"></i> Статистика
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content mt-4">
+                <!-- Вкладка с графом -->
+                <div class="tab-pane fade show active" id="graph" role="tabpanel">
+                    <div id="tree-chart" style="width: 100%; height: 600px;"></div>
+                    <p class="text-muted text-center mt-2">
+                        <i class="fas fa-info-circle"></i>
+                        Зелёные узлы — мужчины, жёлтые — женщины. Серые — умершие.
+                    </p>
+                </div>
+
+                <!-- Вкладка с текстовым деревом -->
+                <div class="tab-pane fade" id="text" role="tabpanel">
+                    <pre class="bg-light p-3 rounded" style="font-family: monospace; overflow-x: auto;">{{ text_tree }}</pre>
+                </div>
+
+                <!-- Вкладка со статистикой -->
+                <div class="tab-pane fade" id="stats" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5><i class="fas fa-users"></i> Общая статистика</h5>
+                                    <table class="table">
+                                        <tr>
+                                            <th>Всего родственников:</th>
+                                            <td>{{ chartjs_data.total_count }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Мужчины:</th>
+                                            <td>{{ chartjs_data.male_count }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Женщины:</th>
+                                            <td>{{ chartjs_data.female_count }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Живые:</th>
+                                            <td>{{ chartjs_data.living_count }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Умершие:</th>
+                                            <td>{{ chartjs_data.deceased_count }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5><i class="fas fa-layer-group"></i> Распределение по поколениям</h5>
+                                    <canvas id="generations-chart" width="400" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Подключаем ECharts -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Данные для графа
+    const treeData = {{ tree_data|safe }};
+
+    // Рендерим граф с помощью ECharts
+    const chartDom = document.getElementById('tree-chart');
+    const myChart = echarts.init(chartDom);
+
+    // Подготавливаем данные для ECharts
+    const nodes = treeData.nodes.map(node => ({
+        id: node.id,
+        name: node.name.split(' ').slice(0, 2).join(' ') || node.name,
+        symbolSize: Math.min(40, 20 + (node.children_count || 0) * 2),
+        category: node.gender === 'male' ? 0 : 1,
+        itemStyle: {
+            color: node.status === 'deceased' ? '#95a5a6' : (node.gender === 'male' ? '#4eac60' : '#f1c40f')
+        },
+        label: {
+            show: true,
+            position: 'bottom',
+            fontSize: 10,
+            formatter: '{b}',
+            offset: [0, 5]
+        }
+    }));
+
+    const links = treeData.links.map(link => ({
+        source: link.source,
+        target: link.target,
+        lineStyle: {
+            color: link.type === 'spouse' ? '#e74c3c' : '#3498db',
+            width: 2,
+            curveness: link.type === 'spouse' ? 0.5 : 0.2,
+            type: 'solid'
+        }
+    }));
+
+    const categories = [
+        { name: 'Мужской', itemStyle: { color: '#4eac60' } },
+        { name: 'Женский', itemStyle: { color: '#f1c40f' } }
+    ];
+
+    const option = {
+        title: {
+            text: 'Схема семейных связей',
+            subtext: 'Красные линии — супруги, синие — родители-дети',
+            left: 'center',
+            top: 0
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: function(params) {
+                if (params.dataType === 'node') {
+                    const node = treeData.nodes.find(n => n.id === params.data.id);
+                    return `<strong>${node.name}</strong><br/>
+                            ${node.lifespan || 'Даты не указаны'}<br/>
+                            ${node.birth_place ? `Место рождения: ${node.birth_place}<br/>` : ''}
+                            Детей: ${node.children_count || 0}`;
+                } else if (params.dataType === 'edge') {
+                    const link = treeData.links.find(l => l.source === params.data.source && l.target === params.data.target);
+                    return link.title || 'Семейная связь';
+                }
+                return params.name;
+            }
+        },
+        series: [{
+            type: 'graph',
+            layout: 'force',
+            force: {
+                repulsion: 500,
+                edgeLength: 150,
+                gravity: 0.1,
+                friction: 0.1,
+                layoutAnimation: true
+            },
+            data: nodes,
+            links: links,
+            categories: categories,
+            roam: true,
+            draggable: true,
+            focusNodeAdjacency: true,
+            edgeSymbol: ['none', 'arrow'],
+            edgeSymbolSize: [0, 8],
+            label: {
+                show: true,
+                position: 'bottom',
+                fontSize: 10,
+                formatter: '{b}'
+            },
+            emphasis: {
+                focus: 'adjacency',
+                lineStyle: {
+                    width: 3
+                }
+            },
+            lineStyle: {
+                color: 'source',
+                curveness: 0.3,
+                width: 2
+            }
+        }]
+    };
+
+    myChart.setOption(option);
+
+    // Адаптация под размер окна
+    window.addEventListener('resize', () => myChart.resize());
+
+    // График поколений
+    const generationsData = {{ chartjs_data.generations|tojson|safe }};
+    const generations = Object.keys(generationsData);
+    const counts = generations.map(gen => generationsData[gen].length);
+
+    const ctx = document.getElementById('generations-chart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: generations.map(gen => `${parseInt(gen) + 1}-е поколение`),
+            datasets: [{
+                label: 'Количество человек',
+                data: counts,
+                backgroundColor: 'rgba(46, 125, 62, 0.7)',
+                borderColor: '#2e7d3e',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Распределение родственников по поколениям'
+                }
+            }
+        }
+    });
+</script>
+
+<style>
+    #tree-chart {
+        background: linear-gradient(145deg, #f8fff6, #f0f7ec);
+        border-radius: 16px;
+        border: 1px solid #d4e8ca;
+    }
+
+    .nav-tabs .nav-link {
+        color: #2e7d3e;
+        font-weight: 500;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #1b5e2a;
+        border-bottom: 2px solid #2e7d3e;
+    }
+
+    pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}

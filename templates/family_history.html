@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm rounded-4">
+        <div class="card-header text-white rounded-top-4" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-history"></i> История изменений
+                </h4>
+                <h5 class="mb-0">
+                    <i class="fas fa-tree"></i> {{ family.family_name }}
+                </h5>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if history_records %}
+                <div class="timeline">
+                    {% for record in history_records %}
+                        <div class="timeline-item">
+                            <div class="timeline-badge">
+                                {% if record.action_type == 'family_created' %}
+                                    <i class="fas fa-plus-circle" style="color: #27ae60;"></i>
+                                {% elif record.action_type == 'family_edited' %}
+                                    <i class="fas fa-edit" style="color: #f39c12;"></i>
+                                {% elif record.action_type == 'person_added' %}
+                                    <i class="fas fa-user-plus" style="color: #2980b9;"></i>
+                                {% elif record.action_type == 'person_edited' %}
+                                    <i class="fas fa-user-edit" style="color: #f39c12;"></i>
+                                {% elif record.action_type == 'person_deleted' %}
+                                    <i class="fas fa-user-minus" style="color: #e74c3c;"></i>
+                                {% elif record.action_type == 'member_added' %}
+                                    <i class="fas fa-user-friends" style="color: #27ae60;"></i>
+                                {% elif record.action_type == 'member_removed' %}
+                                    <i class="fas fa-user-slash" style="color: #e74c3c;"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle" style="color: #95a5a6;"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <strong>{{ record.user_name }}</strong>
+                                                <small class="text-muted ml-2">
+                                                    <i class="fas fa-clock"></i> {{ record.created_at.strftime('%d.%m.%Y %H:%M:%S') }}
+                                                </small>
+                                            </h6>
+                                            <p class="mb-1">{{ record.action_description }}</p>
+                                            {% if record.old_data or record.new_data %}
+                                                <small class="text-muted">
+                                                    {% if record.old_data and record.old_data.get('name') %}
+                                                        <i class="fas fa-undo"></i> Было: {{ record.old_data.name }}
+                                                    {% endif %}
+                                                    {% if record.new_data and record.new_data.get('name') %}
+                                                        <i class="fas fa-redo"></i> Стало: {{ record.new_data.name }}
+                                                    {% endif %}
+                                                    {% if record.new_data and record.new_data.get('relations') %}
+                                                        <br><i class="fas fa-link"></i> Связи: {{ record.new_data.relations|join(', ') }}
+                                                    {% endif %}
+                                                    {% if record.old_data and record.old_data.get('changed_fields') %}
+                                                        <br><i class="fas fa-pen"></i> Изменено: {{ record.old_data.changed_fields|join(', ') }}
+                                                    {% endif %}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                        <span class="badge
+                                            {% if record.action_type == 'family_created' %}badge-success
+                                            {% elif record.action_type == 'family_edited' %}badge-warning
+                                            {% elif record.action_type == 'person_added' %}badge-info
+                                            {% elif record.action_type == 'person_edited' %}badge-warning
+                                            {% elif record.action_type == 'person_deleted' %}badge-danger
+                                            {% elif record.action_type == 'member_added' %}badge-success
+                                            {% elif record.action_type == 'member_removed' %}badge-danger
+                                            {% else %}badge-secondary{% endif %}">
+                                            {{ record.action_type.replace('_', ' ') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle"></i> История изменений пуста
+                </div>
+            {% endif %}
+        </div>
+        <div class="card-footer bg-white">
+            <a href="{{ url_for('family_page', family_id=family.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Назад к семье
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 40px;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .timeline-badge {
+        position: absolute;
+        left: -40px;
+        top: 0;
+        width: 30px;
+        text-align: center;
+        font-size: 20px;
+    }
+
+    .timeline-content {
+        margin-left: 10px;
+    }
+
+    .badge-success {
+        background-color: #27ae60;
+        color: white;
+    }
+
+    .badge-warning {
+        background-color: #f39c12;
+        color: white;
+    }
+
+    .badge-info {
+        background-color: #2980b9;
+        color: white;
+    }
+
+    .badge-danger {
+        background-color: #e74c3c;
+        color: white;
+    }
+
+    .badge-secondary {
+        background-color: #95a5a6;
+        color: white;
+    }
+</style>
+{% endblock %}
