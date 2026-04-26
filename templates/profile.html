@@ -1,5 +1,226 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container mt-4">
+    <!-- Профиль пользователя -->
+    <div class="row">
+        <!-- Левая колонка с информацией о пользователе -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm rounded-4 h-100">
+                <div class="card-body text-center">
+                    <!-- Аватар -->
+                    <div class="mb-4">
+                        {% if current_user.avatar %}
+                            <img src="{{ current_user.avatar }}" alt="Аватар"
+                                 class="rounded-circle border border-success"
+                                 style="width: 150px; height: 150px; object-fit: cover; border-width: 4px !important;">
+                        {% else %}
+                            <div class="rounded-circle bg-success d-flex align-items-center justify-content-center mx-auto"
+                                 style="width: 150px; height: 150px;">
+                                <i class="fas fa-user fa-5x text-white"></i>
+                            </div>
+                        {% endif %}
+                        <button class="btn btn-sm btn-outline-success mt-3" disabled>
+                            <i class="fas fa-camera"></i> Изменить фото (скоро)
+                        </button>
+                    </div>
 
+                    <!-- Имя пользователя -->
+                    <h3 class="mb-2" style="color: #2f8243;">
+                        {{ current_user.name }}
+                    </h3>
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-envelope mr-2"></i>{{ current_user.email }}
+                    </p>
+                    <p class="text-muted small">
+                        <i class="fas fa-calendar-alt mr-2"></i>
+                        На сайте с {{ current_user.created_date.strftime('%d.%m.%Y') if current_user.created_date else 'неизвестно' }}
+                    </p>
+
+                    <hr>
+
+                    <!-- Кнопки действий -->
+                    <a href="{{ url_for('create_family') }}" class="btn btn-success btn-block rounded-pill mb-2">
+                        <i class="fas fa-plus mr-2"></i>Создать новую семью
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-block rounded-pill">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Выйти из аккаунта
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая колонка с контентом -->
+        <div class="col-md-8">
+            <!-- Мои семьи -->
+            <div class="card shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-success text-white rounded-top-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users mr-2"></i>Мои семьи
+                        </h5>
+                        <a href="{{ url_for('my_families') }}" class="btn btn-light btn-sm">
+                            Все семьи <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if created_families or member_families %}
+                        <div class="row">
+                            {% for family in (created_families + member_families)[:3] %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100 {% if family.creator == current_user.id|string %}border-success{% else %}border-info{% endif %}">
+                                        <div class="card-body">
+                                            <h6 class="card-title {% if family.creator == current_user.id|string %}text-success{% else %}text-info{% endif %}">
+                                                {% if family.creator == current_user.id|string %}
+                                                    <i class="fas fa-crown mr-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-user-friends mr-1"></i>
+                                                {% endif %}
+                                                {{ family.family_name }}
+                                            </h6>
+                                            <p class="small text-muted mb-1">
+                                                {% if family.status %}
+                                                    <span class="badge badge-success">Публичная</span>
+                                                {% else %}
+                                                    <span class="badge badge-secondary">Приватная</span>
+                                                {% endif %}
+                                            </p>
+                                            <a href="{{ url_for('family_page', family_id=family.id) }}"
+                                               class="btn btn-sm btn-outline-success stretched-link">
+                                                Перейти
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-tree fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">У вас пока нет семей</p>
+                            <a href="{{ url_for('create_family') }}" class="btn btn-success rounded-pill">
+                                <i class="fas fa-plus mr-2"></i>Создать первую семью
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Статистика (простая) -->
+            <div class="card shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-info text-white rounded-top-4">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar mr-2"></i>Краткая статистика
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="p-3 bg-light rounded-4">
+                                <i class="fas fa-users fa-2x text-success mb-2"></i>
+                                <h4 class="mb-1">{{ created_families|length + member_families|length }}</h4>
+                                <small class="text-muted">Семей</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="p-3 bg-light rounded-4">
+                                <i class="fas fa-crown fa-2x text-warning mb-2"></i>
+                                <h4 class="mb-1">{{ created_families|length }}</h4>
+                                <small class="text-muted">Создано</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="p-3 bg-light rounded-4">
+                                <i class="fas fa-history fa-2x text-primary mb-2"></i>
+                                <h4 class="mb-1">{{ total_edits }}</h4>
+                                <small class="text-muted">Действий</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="p-3 bg-light rounded-4">
+                                <i class="fas fa-user-friends fa-2x text-info mb-2"></i>
+                                <h4 class="mb-1">{{ total_persons }}</h4>
+                                <small class="text-muted">Людей</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Блоки-заглушки для будущего функционала -->
+            <div class="row">
+                <!-- Настройки профиля -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm rounded-4 h-100 bg-light">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-cog fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Настройки профиля</h5>
+                            <p class="text-muted small mb-0">Появятся в ближайшее время</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Достижения -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm rounded-4 h-100 bg-light">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-trophy fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Достижения</h5>
+                            <p class="text-muted small mb-0">Система достижений в разработке</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Социальные связи -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm rounded-4 h-100 bg-light">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-share-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Социальные связи</h5>
+                            <p class="text-muted small mb-0">Друзья и подписчики</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Уведомления -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm rounded-4 h-100 bg-light">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Уведомления</h5>
+                            <p class="text-muted small mb-0">Центр уведомлений</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+
+    .btn-outline-success:hover {
+        background-color: #2f8243;
+        border-color: #2f8243;
+        color: white;
+    }
+
+    .rounded-4 {
+        border-radius: 15px !important;
+    }
+
+    .bg-light {
+        background-color: #f8f9fa !important;
+        border: 2px dashed #dee2e6;
+    }
+</style>
 {% endblock %}
