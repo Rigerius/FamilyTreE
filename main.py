@@ -676,27 +676,77 @@ def api_family_tree_json(family_id):
         db_sess.close()
 
 
+@app.route('/profile')
+@login_required
+def profile():
+    """Страница профиля пользователя"""
+    db_sess = db_session.create_session()
+    try:
+        # Получаем все семьи пользователя
+        created_families = db_sess.query(Family).filter(
+            Family.creator == str(current_user.id)
+        ).all()
+
+        all_families = db_sess.query(Family).all()
+        member_families = []
+        for family in all_families:
+            members = json.loads(family.members) if family.members else []
+            if str(current_user.id) in members and family.creator != str(current_user.id):
+                member_families.append(family)
+
+        # Подсчитываем общее количество родственников во всех семьях
+        total_persons = 0
+        for family in all_families:
+            members = json.loads(family.members) if family.members else []
+            if str(current_user.id) in members:
+                family_data = init_family_data(family)
+                persons = family_data.get("persons", {})
+                total_persons += len(persons)
+
+        # Получаем последнюю активность пользователя
+        recent_activities = db_sess.query(History).filter(
+            History.user_id == str(current_user.id)
+        ).order_by(History.created_at.desc()).limit(5).all()
+
+        # Подсчитываем общее количество изменений
+        total_edits = db_sess.query(History).filter(
+            History.user_id == str(current_user.id)
+        ).count()
+
+        return render_template('profile.html',
+                               created_families=created_families,
+                               member_families=member_families,
+                               total_persons=total_persons,
+                               recent_activities=recent_activities,
+                               total_edits=total_edits)
+    finally:
+        db_sess.close()
+
+
 @app.route('/my_families')
 @login_required
 def my_families():
-    """Страница со всеми семьями пользователя"""
+    """Страница со списком семей пользователя"""
     db_sess = db_session.create_session()
+    try:
+        # Получаем семьи, которые создал пользователь
+        created_families = db_sess.query(Family).filter(
+            Family.creator == str(current_user.id)
+        ).all()
 
-    # Семьи, где пользователь создатель
-    created_families = db_sess.query(Family).filter(Family.creator == current_user.id).all()
+        # Получаем семьи, в которых пользователь состоит как участник
+        all_families = db_sess.query(Family).all()
+        member_families = []
+        for family in all_families:
+            members = json.loads(family.members) if family.members else []
+            if str(current_user.id) in members and family.creator != str(current_user.id):
+                member_families.append(family)
 
-    # Семьи, где пользователь участник (но не создатель)
-    all_families = db_sess.query(Family).all()
-    member_families = []
-    for family in all_families:
-        members = json.loads(family.members) if family.members else []
-        if current_user.id in members and family.creator != current_user.id:
-            member_families.append(family)
-
-    return render_template('my_families.html',
-                           created_families=created_families,
-                           member_families=member_families)
-
+        return render_template('my_families.html',
+                               created_families=created_families,
+                               member_families=member_families)
+    finally:
+        db_sess.close()
 
 
 if __name__ == '__main__':
