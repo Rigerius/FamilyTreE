@@ -62,7 +62,7 @@
                                 {% for spouse_id in person.spouses %}
                                     {% set spouse = persons.get(spouse_id) %}
                                     {% if spouse %}
-                                        <a href="{{ url_for('person_detail', family_id=family.id, person_id=spouse_id) }}">
+                                        <a href="{{ url_for('persons.person_detail', family_id=family.id, person_id=spouse_id) }}">
                                             {{ spouse.full_name }}
                                         </a>{% if not loop.last %}, {% endif %}
                                     {% endif %}
@@ -78,7 +78,7 @@
                                 {% for parent_id in person.parents %}
                                     {% set parent = persons.get(parent_id) %}
                                     {% if parent %}
-                                        <a href="{{ url_for('person_detail', family_id=family.id, person_id=parent_id) }}">
+                                        <a href="{{ url_for('persons.person_detail', family_id=family.id, person_id=parent_id) }}">
                                             {{ parent.full_name }}
                                         </a>{% if not loop.last %}, {% endif %}
                                     {% endif %}
@@ -94,7 +94,7 @@
                                 {% for child_id in person.children %}
                                     {% set child = persons.get(child_id) %}
                                     {% if child %}
-                                        <a href="{{ url_for('person_detail', family_id=family.id, person_id=child_id) }}">
+                                        <a href="{{ url_for('persons.person_detail', family_id=family.id, person_id=child_id) }}">
                                             {{ child.full_name }}
                                         </a>{% if not loop.last %}, {% endif %}
                                     {% endif %}
@@ -119,10 +119,10 @@
             {% endif %}
         </div>
         <div class="card-footer bg-white">
-            <a href="{{ url_for('family_page', family_id=family.id) }}" class="btn btn-outline-secondary">
+            <a href="{{ url_for('families.family_page', family_id=family.id) }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Назад к семье
             </a>
-            <a href="{{ url_for('edit_person', family_id=family.id, person_id=person.id) }}" class="btn btn-warning">
+            <a href="{{ url_for('persons.edit_person', family_id=family.id, person_id=person.id) }}" class="btn btn-warning">
                 <i class="fas fa-edit"></i> Редактировать
             </a>
         </div>

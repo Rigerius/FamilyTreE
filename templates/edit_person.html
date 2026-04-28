@@ -113,7 +113,7 @@
                         <div class="d-grid gap-2 mt-4">
                             {{ form.submit(class="btn btn-warning btn-lg") }}
                             {{ form.delete(class="btn btn-danger btn-lg", onclick="return confirm('Вы уверены, что хотите удалить этого родственника? Это действие необратимо.')") }}
-                            <a href="{{ url_for('person_detail', family_id=family.id, person_id=person.id) }}" class="btn btn-outline-secondary">
+                            <a href="{{ url_for('persons.person_detail', family_id=family.id, person_id=person.id) }}" class="btn btn-outline-secondary">
                                 Отмена
                             </a>
                         </div>

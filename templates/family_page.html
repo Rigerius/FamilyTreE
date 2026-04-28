@@ -9,10 +9,10 @@
                     <i class="fas fa-tree"></i> {{ family.family_name }}
                 </h2>
                 <div class="mt-2 mt-sm-0">
-                    <a href="{{ url_for('family_history', family_id=family.id) }}" class="btn btn-info mr-2">
+                    <a href="{{ url_for('families.family_history', family_id=family.id) }}" class="btn btn-info mr-2">
                         <i class="fas fa-history"></i> История
                     </a>
-                    <a href="{{ url_for('add_person', family_id=family.id) }}" class="btn btn-light">
+                    <a href="{{ url_for('persons.add_person', family_id=family.id) }}" class="btn btn-light">
                         <i class="fas fa-user-plus"></i> Добавить родственника
                     </a>
                 </div>
@@ -94,7 +94,7 @@
                                             <i class="fas fa-map-marker-alt"></i> {{ person.birth_place }}
                                         {% endif %}
                                     </p>
-                                    <a href="{{ url_for('person_detail', family_id=family.id, person_id=person_id) }}"
+                                    <a href="{{ url_for('persons.person_detail', family_id=family.id, person_id=person_id) }}"
                                        class="btn btn-sm btn-outline-success">
                                         Подробнее
                                     </a>
@@ -106,15 +106,15 @@
             {% else %}
                 <div class="alert alert-info text-center">
                     <i class="fas fa-info-circle"></i> Пока нет добавленных родственников.
-                    <a href="{{ url_for('add_person', family_id=family.id) }}" class="alert-link">Добавьте первого родственника!</a>
+                    <a href="{{ url_for('persons.add_person', family_id=family.id) }}" class="alert-link">Добавьте первого родственника!</a>
                 </div>
             {% endif %}
         </div>
         <div class="card-footer bg-white">
-            <a href="{{ url_for('my_families') }}" class="btn btn-outline-secondary">
+            <a href="{{ url_for('families.my_families') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> К моим семьям
             </a>
-            <a href="{{ url_for('family_tree_view', family_id=family.id) }}" class="btn btn-outline-secondary">
+            <a href="{{ url_for('families.family_tree_view', family_id=family.id) }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Семейное дерево
             </a>
         </div>

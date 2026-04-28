@@ -5,13 +5,13 @@
 
 {% if current_user.is_authenticated %}
     <div class="mt-3">
-        <a href="/create_family" class="btn btn-leaf-outline mr-2">
+        <a href="{{ url_for('families.create_family') }}" class="btn btn-leaf-outline mr-2">
             <i class="fas fa-address-book mr-1"></i> Добавить семью
         </a>
-        <a class="btn btn-leaf-outline mr-2" href="{{ url_for('my_families') }}">
+        <a class="btn btn-leaf-outline mr-2" href="{{ url_for('families.my_families') }}">
             <i class="fas fa-users"></i> Мои семьи
         </a>
-        <a class="btn btn-leaf-outline mr-2" href="{{ url_for('profile') }}">
+        <a class="btn btn-leaf-outline mr-2" href="{{ url_for('auth.profile') }}">
             <i class="fas fa-user"></i> Профиль
         </a>
     </div>

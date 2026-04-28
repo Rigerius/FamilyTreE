@@ -21,7 +21,7 @@
                                             Статус: {% if family.status %}Публичная{% else %}Приватная{% endif %}
                                         </small>
                                     </p>
-                                    <a href="{{ url_for('family_page', family_id=family.id) }}" class="btn btn-sm btn-success">
+                                    <a href="{{ url_for('families.family_page', family_id=family.id) }}" class="btn btn-sm btn-success">
                                         Перейти
                                     </a>
                                 </div>
@@ -50,7 +50,7 @@
                                             Создатель: {{ family.creator }}
                                         </small>
                                     </p>
-                                    <a href="{{ url_for('family_page', family_id=family.id) }}" class="btn btn-sm btn-info">
+                                    <a href="{{ url_for('families.family_page', family_id=family.id) }}" class="btn btn-sm btn-info">
                                         Перейти
                                     </a>
                                 </div>
@@ -65,12 +65,12 @@
     {% if not created_families and not member_families %}
         <div class="alert alert-info text-center">
             <i class="fas fa-info-circle"></i> У вас пока нет семей.
-            <a href="{{ url_for('create_family') }}" class="alert-link">Создайте первую семью!</a>
+            <a href="{{ url_for('families.create_family') }}" class="alert-link">Создайте первую семью!</a>
         </div>
     {% endif %}
 
     <div class="mt-4 text-center">
-        <a href="{{ url_for('create_family') }}" class="btn btn-success btn-lg rounded-pill px-5">
+        <a href="{{ url_for('families.create_family') }}" class="btn btn-success btn-lg rounded-pill px-5">
             <i class="fas fa-plus"></i> Создать новую семью
         </a>
     </div>

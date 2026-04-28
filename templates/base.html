@@ -291,22 +291,22 @@
                     <!-- КНОПКИ ВХОДА И РЕГИСТРАЦИИ (справа) -->
                     {% if current_user.is_authenticated %}
                     <div class="auth-buttons ml-auto">
-                        <a href="{{ url_for('profile') }}" class="btn btn-leaf-outline mr-2">
+                        <a href="{{ url_for('auth.profile') }}" class="btn btn-leaf-outline mr-2">
                             <i class="fas fa-user mr-1"></i> {{ current_user.name }}
                         </a>
-                        <a href="{{ url_for('my_families') }}" class="btn btn-leaf-outline mr-2">
+                        <a href="{{ url_for('families.my_families') }}" class="btn btn-leaf-outline mr-2">
                             <i class="fas fa-users mr-1"></i> Мои семьи
                         </a>
-                        <a href="{{ url_for('logout') }}" class="btn btn-leaf-outline">
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-leaf-outline">
                             <i class="fas fa-sign-out-alt mr-1"></i> Выйти
                         </a>
                     </div>
                     {% else %}
                     <div class="auth-buttons ml-auto">
-                        <a href="/login" class="btn btn-leaf-outline mr-2">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-leaf-outline mr-2">
                             <i class="fas fa-sign-in-alt mr-1"></i> Войти
                         </a>
-                        <a href="/register" class="btn btn-leaf-solid">
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-leaf-solid">
                             <i class="fas fa-user-plus mr-1"></i> Регистрация
                         </a>
                     </div>
