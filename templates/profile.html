@@ -2,31 +2,68 @@
 
 {% block content %}
 <div class="container mt-4">
-    <!-- Профиль пользователя -->
     <div class="row">
         <!-- Левая колонка с информацией о пользователе -->
         <div class="col-md-4 mb-4">
             <div class="card shadow-sm rounded-4 h-100">
                 <div class="card-body text-center">
-                    <!-- Аватар -->
+                    <!-- Зона для аватарки с drag-and-drop -->
                     <div class="mb-4">
-                        {% if current_user.avatar %}
-                            <img src="{{ current_user.avatar }}" alt="Аватар"
-                                 class="rounded-circle border border-success"
-                                 style="width: 150px; height: 150px; object-fit: cover; border-width: 4px !important;">
-                        {% else %}
-                            <div class="rounded-circle bg-success d-flex align-items-center justify-content-center mx-auto"
-                                 style="width: 150px; height: 150px;">
-                                <i class="fas fa-user fa-5x text-white"></i>
+                        <div id="avatar-drop-area"
+                             style="cursor: pointer; position: relative; display: inline-block;"
+                             onclick="document.getElementById('avatar-file-input').click()">
+
+                            {% if current_user.avatar %}
+                                <img src="{{ current_user.avatar }}" alt="Аватар"
+                                     class="rounded-circle border border-success"
+                                     style="width: 150px; height: 150px; object-fit: cover; border-width: 4px !important;"
+                                     id="current-avatar-img">
+                            {% else %}
+                                <div class="rounded-circle bg-success d-flex align-items-center justify-content-center mx-auto"
+                                     style="width: 150px; height: 150px;" id="avatar-placeholder">
+                                    <i class="fas fa-user fa-5x text-white"></i>
+                                </div>
+                            {% endif %}
+
+                            <!-- Оверлей при наведении -->
+                            <div id="avatar-overlay"
+                                 style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                                        background: rgba(0,0,0,0.5); border-radius: 50%; width: 150px; height: 150px;
+                                        display: none; align-items: center; justify-content: center; pointer-events: none;">
+                                <i class="fas fa-camera fa-2x text-white"></i>
                             </div>
-                        {% endif %}
-                        <button class="btn btn-sm btn-outline-success mt-3" disabled>
-                            <i class="fas fa-camera"></i> Изменить фото (скоро)
+                        </div>
+
+                        <input type="file" id="avatar-file-input" accept="image/*" style="display: none;">
+
+                        <button type="button" class="btn btn-sm btn-outline-success mt-3"
+                                onclick="document.getElementById('avatar-file-input').click()">
+                            <i class="fas fa-camera"></i> Изменить фото
                         </button>
                     </div>
 
+                    <!-- Предпросмотр -->
+                    <div class="mt-3" id="preview-container" style="display: none;">
+                        <img id="preview-image" src="#" alt="Предпросмотр"
+                             style="max-width: 150px; max-height: 150px; border-radius: 50%; object-fit: cover;">
+                        <div class="mt-2">
+                            <button class="btn btn-success btn-sm" id="upload-avatar-btn">
+                                <i class="fas fa-upload"></i> Сохранить
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="cancel-upload-btn">
+                                <i class="fas fa-times"></i> Отмена
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Прогресс-бар -->
+                    <div class="progress mt-2" style="display: none;" id="upload-progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                             style="width: 0%"></div>
+                    </div>
+
                     <!-- Имя пользователя -->
-                    <h3 class="mb-2" style="color: #2f8243;">
+                    <h3 class="mb-2 mt-3" style="color: #2f8243;">
                         {{ current_user.name }}
                     </h3>
                     <p class="text-muted mb-1">
@@ -107,7 +144,7 @@
                 </div>
             </div>
 
-            <!-- Статистика (простая) -->
+            <!-- Статистика -->
             <div class="card shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-info text-white rounded-top-4">
                     <h5 class="mb-0">
@@ -147,6 +184,45 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Последняя активность -->
+            {% if recent_activities %}
+            <div class="card shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-warning text-white rounded-top-4">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock mr-2"></i>Последняя активность
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    {% if activity.action_type == 'family_created' %}
+                                        <i class="fas fa-plus-circle text-success"></i>
+                                    {% elif activity.action_type == 'person_added' %}
+                                        <i class="fas fa-user-plus text-info"></i>
+                                    {% elif activity.action_type == 'person_edited' %}
+                                        <i class="fas fa-user-edit text-warning"></i>
+                                    {% elif activity.action_type == 'person_deleted' %}
+                                        <i class="fas fa-user-minus text-danger"></i>
+                                    {% else %}
+                                        <i class="fas fa-info-circle text-muted"></i>
+                                    {% endif %}
+                                    {{ activity.action_description }}
+                                </h6>
+                                <small class="text-muted">{{ activity.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-users mr-1"></i>Семья ID: {{ activity.family_id }}
+                            </small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Блоки-заглушки для будущего функционала -->
             <div class="row">
@@ -198,7 +274,203 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropArea = document.getElementById('avatar-drop-area');
+    const fileInput = document.getElementById('avatar-file-input');
+    const previewContainer = document.getElementById('preview-container');
+    const previewImage = document.getElementById('preview-image');
+    const uploadBtn = document.getElementById('upload-avatar-btn');
+    const cancelBtn = document.getElementById('cancel-upload-btn');
+    const progressBar = document.getElementById('upload-progress');
+    const progressBarInner = progressBar ? progressBar.querySelector('.progress-bar') : null;
+    const overlay = document.getElementById('avatar-overlay');
+
+    let selectedFile = null;
+
+    // Drag and drop эффекты
+    if (dropArea) {
+        dropArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropArea.style.transform = 'scale(1.05)';
+            if (overlay) overlay.style.display = 'flex';
+        });
+
+        dropArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropArea.style.transform = 'scale(1)';
+            if (overlay) overlay.style.display = 'none';
+        });
+
+        dropArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropArea.style.transform = 'scale(1)';
+            if (overlay) overlay.style.display = 'none';
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // Эффекты при наведении мыши
+        dropArea.addEventListener('mouseenter', function() {
+            dropArea.style.transform = 'scale(1.05)';
+            if (overlay) overlay.style.display = 'flex';
+        });
+
+        dropArea.addEventListener('mouseleave', function() {
+            dropArea.style.transform = 'scale(1)';
+            if (overlay) overlay.style.display = 'none';
+        });
+    }
+
+    // Обработчик выбора файла через input
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                handleFile(this.files[0]);
+            }
+        });
+    }
+
+    function handleFile(file) {
+        // Проверка типа файла
+        if (!file.type.startsWith('image/')) {
+            alert('Пожалуйста, выберите изображение!');
+            return;
+        }
+
+        // Проверка размера (5 МБ)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Файл слишком большой! Максимальный размер: 5 МБ');
+            return;
+        }
+
+        selectedFile = file;
+
+        // Показываем предпросмотр
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (previewImage) {
+                previewImage.src = e.target.result;
+            }
+            if (previewContainer) {
+                previewContainer.style.display = 'block';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Отмена загрузки
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function() {
+            selectedFile = null;
+            if (previewImage) previewImage.src = '#';
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (fileInput) fileInput.value = '';
+            if (progressBar) progressBar.style.display = 'none';
+        });
+    }
+
+    // Загрузка на сервер
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', function() {
+            if (!selectedFile) {
+                alert('Сначала выберите изображение!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('avatar', selectedFile);
+
+            // Показываем прогресс-бар
+            if (progressBar) {
+                progressBar.style.display = 'block';
+                if (progressBarInner) progressBarInner.style.width = '0%';
+            }
+
+            // Отключаем кнопки на время загрузки
+            if (uploadBtn) uploadBtn.disabled = true;
+            if (cancelBtn) cancelBtn.disabled = true;
+
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable && progressBarInner) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    progressBarInner.style.width = percent + '%';
+                }
+            });
+
+            xhr.addEventListener('load', function() {
+                if (xhr.status === 200 || xhr.status === 302) {
+                    // Успешно загружено - обновляем страницу
+                    window.location.reload();
+                } else {
+                    alert('Ошибка загрузки! Попробуйте еще раз.');
+                }
+                if (progressBar) progressBar.style.display = 'none';
+                if (uploadBtn) uploadBtn.disabled = false;
+                if (cancelBtn) cancelBtn.disabled = false;
+            });
+
+            xhr.addEventListener('error', function() {
+                alert('Ошибка соединения! Проверьте подключение к интернету.');
+                if (progressBar) progressBar.style.display = 'none';
+                if (uploadBtn) uploadBtn.disabled = false;
+                if (cancelBtn) cancelBtn.disabled = false;
+            });
+
+            xhr.open('POST', "{{ url_for('auth.upload_avatar') }}");
+            xhr.send(formData);
+        });
+    }
+});
+</script>
+
 <style>
+    #avatar-drop-area {
+        border-radius: 50%;
+        transition: transform 0.3s ease;
+    }
+
+    #avatar-overlay {
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .progress {
+        height: 6px;
+        border-radius: 10px;
+        background-color: #e9ecef;
+    }
+
+    .progress-bar {
+        transition: width 0.4s ease;
+        background: linear-gradient(90deg, #2f8243, #4eac60);
+    }
+
+    #preview-image {
+        border: 3px solid #2f8243;
+        box-shadow: 0 4px 12px rgba(47, 130, 67, 0.3);
+        animation: fadeInScale 0.3s ease;
+    }
+
+    @keyframes fadeInScale {
+        from {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
     .card {
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
