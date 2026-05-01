@@ -1,5 +1,5 @@
-from flask import Flask, render_template
-from flask_login import LoginManager
+from flask import Flask, render_template, session, url_for, redirect, request
+from flask_login import LoginManager, login_required
 from data import db_session
 from data.users import User
 
@@ -34,6 +34,14 @@ db_session.global_init("db/database.db")
 def index():
     """Главная страница сайта"""
     return render_template('test_1.html')
+
+
+@app.route('/clear-flash')
+@login_required
+def clear_flash():
+    """Очистить все flash-сообщения"""
+    session.pop('_flashes', None)
+    return redirect(request.referrer or url_for('index'))
 
 
 app.register_blueprint(auth_bp)

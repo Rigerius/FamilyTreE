@@ -96,7 +96,7 @@ def create_family():
             db_sess.close()
 
         flash(f'Семья "{form.family_name.data}" успешно создана!', 'success')
-        return redirect(url_for('family_page', family_id=new_family.id))
+        return redirect(url_for('families.family_page', family_id=new_family.id))
 
     return render_template('create_family.html', form=form)
 

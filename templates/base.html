@@ -18,7 +18,6 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            padding-top: 80px;
         }
 
         /* Прижимаем футер */
@@ -27,12 +26,12 @@
         }
 
         /* ---------- ВЕРХНЕЕ МЕНЮ: СВЕТЛО-ЗЕЛЕНАЯ ЛИСТВА ---------- */
+        /* Меню теперь имеет фон цвета молодой листвы, нежно и гармонично */
         .navbar-light.bg-leaf {
-            background-color: #d9f0cf !important;
+            background-color: #d9f0cf !important;   /* светлый лиственный зеленый */
             box-shadow: 0 8px 20px rgba(60, 100, 40, 0.1);
             border-bottom: 1px solid #b8daaa;
             padding: 0.6rem 1rem;
-            z-index: 1030;
         }
 
         /* Логотип — зелёный акцент, свежий */
@@ -88,7 +87,7 @@
             vertical-align: middle;
         }
 
-        /* ---------- СТРОКА ПОИСКА ПО ЦЕНТРУ ---------- */
+        /* ---------- СТРОКА ПОИСКА ПО ЦЕНТРУ (адаптивная, красивая) ---------- */
         .search-wrapper {
             flex: 1;
             max-width: 480px;
@@ -146,7 +145,7 @@
             color: #1f5730;
         }
 
-        /* Кнопки входа / регистрации */
+        /* Кнопки входа / регистрации (аккуратные, зелёная гамма) */
         .btn-leaf-outline {
             border: 1.5px solid #3c8b50;
             background: transparent;
@@ -180,7 +179,7 @@
             color: white;
         }
 
-        /* Основной блок контента */
+        /* Основной блок контента (пустой шаблон, только для вставки) */
         .content-block {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(2px);
@@ -196,7 +195,7 @@
             max-width: 1400px !important
         }
 
-        /* Футер – тёмно-изумрудный */
+        /* Футер – тёмно-изумрудный (как просили, низ) */
         .footer-emerald {
             background-color: #0a2f1f;
             color: #cfebd4;
@@ -226,26 +225,7 @@
             transform: translateY(-3px);
         }
 
-        /* КРИТИЧЕСКИ ВАЖНО: Исправление для модальных окон */
-        .modal {
-            z-index: 1050 !important;
-        }
-
-        .modal-backdrop {
-            z-index: 1040 !important;
-        }
-
-        .modal-dialog {
-            z-index: 1055 !important;
-            margin-top: 60px;
-        }
-
-        .modal-content {
-            position: relative;
-            z-index: 1060;
-        }
-
-        /* Адаптивность */
+        /* Адаптивность: на маленьких экранах поиск перестраивается */
         @media (max-width: 992px) {
             .search-wrapper {
                 margin: 12px 0;
@@ -281,25 +261,25 @@
 
 <div class="wrapper">
     <header>
-        <!-- ВЕРХНЕЕ МЕНЮ -->
+        <!-- ВЕРХНЕЕ МЕНЮ - цвет свежей листвы (светло-зеленый), убраны все навигационные ссылки, только логотип, поиск по центру, кнопки входа/регистрации -->
         <nav class="navbar navbar-expand-lg navbar-light bg-leaf fixed-top">
             <div class="container">
                 <!-- Логотип (слева) -->
                 <a class="navbar-brand" href="/">
-                    <div class="logo-icon-nav" style="background: none; box-shadow: none;">
+                    <div href="/" class="logo-icon-nav" style="background: none; box-shadow: none;">
                         <img src="/static/img/icon.png" alt="Лого" style="width: 42px; height: 42px; border-radius: 21px;">
                     </div>
                     <h2 class="d-none d-sm-inline-block">Семейное древо</h2>
                     <h2 class="d-inline d-sm-none">Семейное древо</h2>
                 </a>
 
-                <!-- Кнопка для мобильного меню -->
+                <!-- Кнопка для мобильного меню (только для схлопывания, но ссылок всё равно нет, оставим на случай если понадобится) -->
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarMain">
-                    <!-- ЦЕНТРАЛЬНАЯ СТРОКА ПОИСКА -->
+                    <!-- ЦЕНТРАЛЬНАЯ СТРОКА ПОИСКА (в будущем реализует поиск по сайту) -->
                     <div class="search-wrapper mx-auto">
                         <form class="search-form" action="#" method="get" onsubmit="event.preventDefault(); performSearch();">
                             <i class="fas fa-search search-icon"></i>
@@ -307,7 +287,7 @@
                             <button type="submit" class="search-btn">Найти</button>
                         </form>
                     </div>
-
+                    
                     <!-- КНОПКИ ВХОДА И РЕГИСТРАЦИИ (справа) -->
                     {% if current_user.is_authenticated %}
                     <div class="auth-buttons ml-auto">
@@ -334,32 +314,22 @@
                 </div>
             </div>
         </nav>
+        <!-- Отступ под фиксированный навбар, чтобы контент не перекрывался -->
+        <div style="height: 88px;"></div>
     </header>
 
-    <!-- ОСНОВНОЕ ТЕЛО -->
+    <!-- ОСНОВНОЕ ТЕЛО: ПУСТОЙ БЛОК ДЛЯ ДИНАМИЧЕСКОЙ ВСТАВКИ -->
     <main role="main" class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
-                        {{ message }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
         <div class="content-block">
             {% block content %}
-            <!-- Заглушка -->
+            <!-- Этот блок будет заменяться содержимым других страниц.
+                 Сейчас здесь красивая заглушка, которую легко заменить на реальный контент. -->
             <div class="text-center py-5 my-2">
                 <i class="fas fa-leaf fa-4x" style="color: #569f5e; opacity: 0.7;"></i>
                 <h3 class="mt-3" style="color: #256f38; font-weight: 500;">Область для контента</h3>
                 <p class="text-muted" style="color: #4a6b50 !important;">Сюда будет подставляться код страниц: главная, каталог, статьи, личный кабинет и т.д.</p>
                 <div class="alert alert-light border-success mt-4" style="background: #f0fcec; max-width: 550px; margin: 0 auto; border-radius: 28px;">
-                    <i class="fas fa-code-branch mr-2"></i> Динамическая вставка через шаблонизатор (Jinja2 / Django)
+                    <i class="fas fa-code-branch mr-2"></i>  Динамическая вставка через шаблонизатор (Jinja2 / Django)
                 </div>
             </div>
             {% endblock %}
