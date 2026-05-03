@@ -1,0 +1,184 @@
+.search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.search-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Модальное окно поиска */
+.search-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    z-index: 1060;
+    width: 550px;
+    max-width: 95vw;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-modal.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Шапка окна */
+.search-modal-header {
+    background: linear-gradient(135deg, #2f8243, #4eac60);
+    color: white;
+    padding: 20px 25px;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.search-modal-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.search-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 1.2rem;
+}
+
+.search-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Тело окна */
+.search-modal-body {
+    padding: 25px;
+}
+
+/* Категории поиска */
+.search-categories {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.search-category-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 14px 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-weight: 500;
+    color: #555;
+    position: relative;
+    overflow: hidden;
+}
+
+.search-category-btn i {
+    display: block;
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+    transition: transform 0.3s ease;
+}
+
+.search-category-btn:hover {
+    border-color: #4eac60;
+    color: #2f8243;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(47, 130, 67, 0.15);
+}
+
+.search-category-btn:hover i {
+    transform: scale(1.1);
+}
+
+.search-category-btn.active {
+    background: linear-gradient(135deg, #2f8243, #4eac60);
+    color: white;
+    border-color: #2f8243;
+    box-shadow: 0 8px 20px rgba(47, 130, 67, 0.3);
+}
+
+.search-category-btn.active i {
+    color: white;
+}
+
+/* Поле ввода с кнопкой */
+.search-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-modal-input {
+    flex: 1;
+    border: 2px solid #e0e0e0;
+    border-radius: 50px;
+    padding: 14px 22px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.search-modal-input:focus {
+    border-color: #4eac60;
+    box-shadow: 0 0 0 3px rgba(78, 172, 96, 0.15);
+}
+
+.search-modal-submit {
+    background: linear-gradient(135deg, #2f8243, #4eac60);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 30px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.search-modal-submit:hover {
+    background: linear-gradient(135deg, #256a34, #3d9b4e);
+    box-shadow: 0 8px 20px rgba(47, 130, 67, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Анимация пульсации для активной кнопки */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(47, 130, 67, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(47, 130, 67, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(47, 130, 67, 0); }
+}
+
+.search-category-btn.active {
+    animation: pulse 2s infinite;
+}

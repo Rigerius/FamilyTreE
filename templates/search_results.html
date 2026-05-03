@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">
+        <i class="fas fa-search mr-2"></i>
+        Результаты поиска
+    </h2>
+    
+    <div class="alert alert-info">
+        <strong>
+            Поиск по
+            {% if category == 'families' %}семьям
+            {% elif category == 'persons' %}личностям
+            {% else %}пользователям
+            {% endif %}:
+        </strong>
+        "{{ query }}"
+    </div>
+
+    {% if query %}
+        {% if results %}
+            <p class="text-muted mb-3">Найдено: {{ results|length }}</p>
+            <div class="row">
+                {% for result in results %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    {% if result.type == 'family' %}
+                                        <i class="fas fa-users fa-2x text-success mr-3"></i>
+                                    {% elif result.type == 'person' %}
+                                        <i class="fas fa-user fa-2x text-info mr-3"></i>
+                                    {% else %}
+                                        <i class="fas fa-user-circle fa-2x text-warning mr-3"></i>
+                                    {% endif %}
+                                    <h5 class="card-title mb-0">{{ result.name }}</h5>
+                                </div>
+                                <p class="card-text text-muted">{{ result.description }}</p>
+                                {% if result.url %}
+                                    <a href="{{ result.url }}" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-arrow-right mr-1"></i> Перейти
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-4x text-muted mb-3" style="opacity: 0.5;"></i>
+                <h4>Ничего не найдено</h4>
+                <p class="text-muted">По запросу "{{ query }}" ничего не найдено</p>
+                <p class="text-muted small">Попробуйте изменить запрос или выбрать другую категорию</p>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-hand-point-up fa-3x text-muted mb-3"></i>
+            <h4>Введите поисковый запрос</h4>
+            <p class="text-muted">Используйте поиск в верхней панели</p>
+        </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <button onclick="window.history.back()" class="btn btn-outline-success">
+            <i class="fas fa-arrow-left mr-2"></i>Назад
+        </button>
+        <button onclick="document.getElementById('searchTriggerBtn').click()" class="btn btn-success ml-2">
+            <i class="fas fa-search mr-2"></i>Новый поиск
+        </button>
+    </div>
+</div>
+{% endblock %}
