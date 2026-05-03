@@ -187,18 +187,17 @@ def family_tree_view(family_id):
         family_data = init_family_data(family)
         persons = family_data.get("persons", {})
 
-        # Генерируем дерево
-        generator = FamilyTreeGenerator(persons, family.family_name)
-        tree_data = generator.generate_tree()
+       generator = FamilyTreeGenerator(persons, family.family_name)
 
-        # Для разных форматов
-        chartjs_data = TreeVisualizationHelper.format_for_chartjs(tree_data)
-        text_tree = TreeVisualizationHelper.generate_family_text(generator)
+tree_data_vis = generator.to_visjs()
 
-        return render_template('family_tree.html',
-                               family=family,
-                               tree_data=json.dumps(tree_data, ensure_ascii=False),
-                               chartjs_data=chartjs_data,
-                               text_tree=text_tree)
+chartjs_data = TreeVisualizationHelper.format_for_chartjs(generator.tree_data)
+text_tree = TreeVisualizationHelper.generate_family_text(generator)
+
+return render_template('family_tree.html',
+                       family=family,
+                       tree_data=tree_data_vis,
+                       chartjs_data=chartjs_data,
+                       text_tree=text_tree)
     finally:
         db_sess.close()
