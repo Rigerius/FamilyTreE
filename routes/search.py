@@ -1,68 +1,75 @@
-from flask import Blueprint, render_template, request
+# routes/search.py
+from flask import Blueprint, render_template, request, flash, jsonify
 from flask_login import login_required, current_user
 from data import db_session
 from data.users import User
 from data.families import Family
 import json
 
-search_bp = Blueprint('search', __name__)
+search_bp = Blueprint('search', __name__, url_prefix='/search')
 
 
-@search_bp.route('/families/search')
+@search_bp.route('/')
 @login_required
-def search_families():
+def search():
+    """Главная страница поиска"""
     query = request.args.get('q', '').strip()
-    results = []
+    search_type = request.args.get('type', 'users')  # users, families, persons
 
-    if query:
-        db_sess = db_session.create_session()
-        try:
-            # Ищем все семьи
-            all_families = db_sess.query(Family).all()
+    if not query:
+        return render_template('search.html', query='', results=[], search_type=search_type)
 
-            for family in all_families:
-                # Проверяем, содержит ли название поисковый запрос (без учёта регистра)
-                if query.lower() in family.family_name.lower():
-                    # Проверяем, есть ли у пользователя доступ к этой семье
-                    members = json.loads(family.members) if family.members else []
-                    if str(current_user.id) in members or family.status == True:
-                        # Получаем данные о семье
-                        family_data = json.loads(family.data) if family.data else {}
-                        persons = family_data.get("persons", {})
+    db_sess = db_session.create_session()
+    try:
+        results = []
 
-                        results.append({
-                            'id': family.id,
-                            'name': family.family_name,
-                            'description': f"{'Публичная' if family.status else 'Приватная'} семья • {len(persons)} чел. • Создатель ID: {family.creator}",
-                            'type': 'family',
-                            'url': f'/families/{family.id}'
-                        })
-        finally:
-            db_sess.close()
+        if search_type == 'users':
+            # Поиск пользователей
+            users = db_sess.query(User).filter(
+                User.name.ilike(f'%{query}%') | User.email.ilike(f'%{query}%')
+            ).all()
 
-    return render_template('search_results.html',
-                           query=query,
-                           category='families',
-                           results=results)
+            for user in users:
+                # Получаем количество публичных семей пользователя
+                families_count = db_sess.query(Family).filter(
+                    Family.creator == str(user.id),
+                    Family.status == True
+                ).count()
 
+                results.append({
+                    'id': user.id,
+                    'name': user.name,
+                    'email': user.email,
+                    'avatar': user.avatar,
+                    'created_date': user.created_date,
+                    'families_count': families_count,
+                    'type': 'user'
+                })
 
-@search_bp.route('/persons/search')
-@login_required
-def search_persons():
-    query = request.args.get('q', '').strip()
-    results = []
+        elif search_type == 'families':
+            # Поиск семей (будет реализовано позже)
+            families = db_sess.query(Family).filter(
+                Family.family_name.ilike(f'%{query}%'),
+                Family.status == True  # Только публичные семьи
+            ).all()
 
-    if query:
-        db_sess = db_session.create_session()
-        try:
-            # Ищем во всех семьях, где пользователь состоит
-            all_families = db_sess.query(Family).all()
-
-            for family in all_families:
+            for family in families:
                 members = json.loads(family.members) if family.members else []
-                if str(current_user.id) not in members:
-                    continue  # Пропускаем семьи без доступа
+                results.append({
+                    'id': family.id,
+                    'name': family.family_name,
+                    'creator_id': family.creator,
+                    'members_count': len(members),
+                    'created_date': family.created_date,
+                    'type': 'family'
+                })
 
+        elif search_type == 'persons':
+            # Поиск людей в семьях (будет реализовано позже)
+            # Получаем все публичные семьи
+            public_families = db_sess.query(Family).filter(Family.status == True).all()
+
+            for family in public_families:
                 family_data = json.loads(family.data) if family.data else {}
                 persons = family_data.get("persons", {})
 
@@ -72,46 +79,49 @@ def search_persons():
                         results.append({
                             'id': person_id,
                             'name': full_name,
-                            'description': f"Семья: {family.family_name} • {person.get('gender', '')} • {person.get('age', '?')} лет",
-                            'type': 'person',
-                            'url': f'/persons/{family.id}/person/{person_id}'
+                            'family_id': family.id,
+                            'family_name': family.family_name,
+                            'type': 'person'
                         })
-        finally:
-            db_sess.close()
 
-    return render_template('search_results.html',
-                           query=query,
-                           category='persons',
-                           results=results)
+        return render_template('search.html',
+                               query=query,
+                               results=results,
+                               search_type=search_type,
+                               result_count=len(results))
+    finally:
+        db_sess.close()
 
 
-@search_bp.route('/users/search')
+@search_bp.route('/api', methods=['GET'])
 @login_required
-def search_users():
+def api_search():
+    """API для поиска (JSON)"""
     query = request.args.get('q', '').strip()
-    results = []
+    search_type = request.args.get('type', 'users')
+    limit = request.args.get('limit', 10, type=int)
 
-    if query:
-        db_sess = db_session.create_session()
-        try:
-            # Ищем пользователей по имени
+    if not query:
+        return jsonify({'success': True, 'results': []})
+
+    db_sess = db_session.create_session()
+    try:
+        results = []
+
+        if search_type == 'users':
             users = db_sess.query(User).filter(
-                User.name.ilike(f'%{query}%')  # ilike - поиск без учёта регистра
-            ).all()
+                User.name.ilike(f'%{query}%') | User.email.ilike(f'%{query}%')
+            ).limit(limit).all()
 
             for user in users:
-                # Не показываем пароли и хеши
                 results.append({
                     'id': user.id,
                     'name': user.name,
-                    'description': f"Email: {user.email} • На сайте с {user.created_date.strftime('%d.%m.%Y') if user.created_date else 'неизвестно'}",
-                    'type': 'user',
-                    'url': f'/auth/profile'  # Пока что просто ссылка на свой профиль
+                    'email': user.email,
+                    'avatar': user.avatar,
+                    'type': 'user'
                 })
-        finally:
-            db_sess.close()
 
-    return render_template('search_results.html',
-                           query=query,
-                           category='users',
-                           results=results)
+        return jsonify({'success': True, 'results': results})
+    finally:
+        db_sess.close()
