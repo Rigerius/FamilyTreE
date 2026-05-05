@@ -12,15 +12,17 @@ def calculate_age(birth_date, death_date=None):
 
 
 def init_family_data(family):
+    """Инициализация данных семьи"""
     if not family.data or family.data == "" or family.data == "{}":
-        family.data = json.dumps({
+        return {
             "persons": {},
+            "tree_positions": {},
             "metadata": {
                 "created_at": datetime.now().isoformat(),
                 "updated_at": datetime.now().isoformat(),
                 "version": "2.0"
             }
-        })
+        }
     return json.loads(family.data)
 
 
