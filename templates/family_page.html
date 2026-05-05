@@ -9,15 +9,48 @@
                     <i class="fas fa-tree"></i> {{ family.family_name }}
                 </h2>
                 <div class="mt-2 mt-sm-0">
-                    <a href="{{ url_for('families.family_history', family_id=family.id) }}" class="btn btn-info mr-2">
-                        <i class="fas fa-history"></i> История
-                    </a>
-                    <a href="{{ url_for('persons.add_person', family_id=family.id) }}" class="btn btn-light">
-                        <i class="fas fa-user-plus"></i> Добавить родственника
-                    </a>
+                    <!-- Только для участников семьи (кнопки редактирования) -->
+                    {% if user_can_edit %}
+                        {% if is_creator %}
+                            <a href="{{ url_for('families.family_members', family_id=family.id) }}" class="btn btn-info mr-2">
+                                <i class="fas fa-users"></i> Участники
+                            </a>
+                        {% endif %}
+                        <a href="{{ url_for('families.family_history', family_id=family.id) }}" class="btn btn-info mr-2">
+                            <i class="fas fa-history"></i> История
+                        </a>
+                        <a href="{{ url_for('persons.add_person', family_id=family.id) }}" class="btn btn-light">
+                            <i class="fas fa-user-plus"></i> Добавить родственника
+                        </a>
+                    {% else %}
+                        <!-- Для гостей (только просмотр истории, если семья публичная) -->
+                        {% if is_public %}
+                            <a href="{{ url_for('families.family_history', family_id=family.id) }}" class="btn btn-info mr-2">
+                                <i class="fas fa-history"></i> История
+                            </a>
+                        {% endif %}
+                    {% endif %}
                 </div>
             </div>
         </div>
+
+        <!-- Предупреждение для гостей -->
+        {% if not user_can_edit and is_public %}
+            <div class="alert alert-info m-3 mb-0">
+                <i class="fas fa-info-circle"></i>
+                Вы просматриваете публичную семью. Для редактирования необходимо
+                <a href="{{ url_for('auth.login') }}" class="alert-link">войти</a>
+                и стать участником семьи.
+            </div>
+        {% endif %}
+
+        {% if is_public and user_can_edit and not is_creator %}
+            <div class="alert alert-success m-3 mb-0">
+                <i class="fas fa-check-circle"></i>
+                Вы являетесь участником этой семьи. Вам доступно редактирование!
+            </div>
+        {% endif %}
+
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-md-6">
@@ -48,6 +81,9 @@
                                 <i class="fas fa-user"></i> {{ member }}
                                 {% if member == creator_name %}
                                     <span class="badge badge-primary ml-2">Создатель</span>
+                                {% endif %}
+                                {% if member in editors_names and member != creator_name %}
+                                    <span class="badge badge-info ml-2">Редактор</span>
                                 {% endif %}
                             </li>
                         {% endfor %}
@@ -106,18 +142,51 @@
             {% else %}
                 <div class="alert alert-info text-center">
                     <i class="fas fa-info-circle"></i> Пока нет добавленных родственников.
-                    <a href="{{ url_for('persons.add_person', family_id=family.id) }}" class="alert-link">Добавьте первого родственника!</a>
+                    {% if user_can_edit %}
+                        <a href="{{ url_for('persons.add_person', family_id=family.id) }}" class="alert-link">Добавьте первого родственника!</a>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
         <div class="card-footer bg-white">
-            <a href="{{ url_for('families.my_families') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> К моим семьям
-            </a>
-            <a href="{{ url_for('families.family_tree_view', family_id=family.id) }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Семейное дерево
-            </a>
+            <div class="d-flex justify-content-between">
+                <div>
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('families.my_families') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> К моим семьям
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> На главную
+                        </a>
+                    {% endif %}
+                </div>
+                <div>
+                    <a href="{{ url_for('families.family_tree_view', family_id=family.id) }}" class="btn btn-outline-success">
+                        <i class="fas fa-tree"></i> Семейное дерево
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    .rounded-4 {
+        border-radius: 15px !important;
+    }
+    .badge-primary {
+        background-color: #2f8243;
+    }
+    .badge-info {
+        background-color: #17a2b8;
+    }
+</style>
 {% endblock %}

@@ -7,14 +7,15 @@
         <div class="col-md-4 mb-4">
             <div class="card shadow-sm rounded-4 h-100">
                 <div class="card-body text-center">
-                    <!-- Зона для аватарки с drag-and-drop -->
+                    <!-- Зона для аватарки (только для владельца) -->
                     <div class="mb-4">
+                        {% if is_owner %}
                         <div id="avatar-drop-area"
                              style="cursor: pointer; position: relative; display: inline-block;"
                              onclick="document.getElementById('avatar-file-input').click()">
 
-                            {% if current_user.avatar %}
-                                <img src="{{ current_user.avatar }}" alt="Аватар"
+                            {% if profile_user.avatar %}
+                                <img src="{{ profile_user.avatar }}" alt="Аватар"
                                      class="rounded-circle border border-success"
                                      style="width: 150px; height: 150px; object-fit: cover; border-width: 4px !important;"
                                      id="current-avatar-img">
@@ -25,7 +26,6 @@
                                 </div>
                             {% endif %}
 
-                            <!-- Оверлей при наведении -->
                             <div id="avatar-overlay"
                                  style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
                                         background: rgba(0,0,0,0.5); border-radius: 50%; width: 150px; height: 150px;
@@ -40,49 +40,72 @@
                                 onclick="document.getElementById('avatar-file-input').click()">
                             <i class="fas fa-camera"></i> Изменить фото
                         </button>
-                    </div>
 
-                    <!-- Предпросмотр -->
-                    <div class="mt-3" id="preview-container" style="display: none;">
-                        <img id="preview-image" src="#" alt="Предпросмотр"
-                             style="max-width: 150px; max-height: 150px; border-radius: 50%; object-fit: cover;">
-                        <div class="mt-2">
-                            <button class="btn btn-success btn-sm" id="upload-avatar-btn">
-                                <i class="fas fa-upload"></i> Сохранить
-                            </button>
-                            <button class="btn btn-secondary btn-sm" id="cancel-upload-btn">
-                                <i class="fas fa-times"></i> Отмена
-                            </button>
+                        <!-- Предпросмотр и прогресс-бар -->
+                        <div class="mt-3" id="preview-container" style="display: none;">
+                            <img id="preview-image" src="#" alt="Предпросмотр"
+                                 style="max-width: 150px; max-height: 150px; border-radius: 50%; object-fit: cover;">
+                            <div class="mt-2">
+                                <button class="btn btn-success btn-sm" id="upload-avatar-btn">
+                                    <i class="fas fa-upload"></i> Сохранить
+                                </button>
+                                <button class="btn btn-secondary btn-sm" id="cancel-upload-btn">
+                                    <i class="fas fa-times"></i> Отмена
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Прогресс-бар -->
-                    <div class="progress mt-2" style="display: none;" id="upload-progress">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                             style="width: 0%"></div>
+                        <div class="progress mt-2" style="display: none;" id="upload-progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                 style="width: 0%"></div>
+                        </div>
+                        {% else %}
+                            {% if profile_user.avatar %}
+                                <img src="{{ profile_user.avatar }}" alt="Аватар"
+                                     class="rounded-circle border border-success"
+                                     style="width: 150px; height: 150px; object-fit: cover; border-width: 4px !important;">
+                            {% else %}
+                                <div class="rounded-circle bg-success d-flex align-items-center justify-content-center mx-auto"
+                                     style="width: 150px; height: 150px;">
+                                    <i class="fas fa-user fa-5x text-white"></i>
+                                </div>
+                            {% endif %}
+                        {% endif %}
                     </div>
 
                     <!-- Имя пользователя -->
                     <h3 class="mb-2 mt-3" style="color: #2f8243;">
-                        {{ current_user.name }}
+                        {{ profile_user.name }}
+                        {% if not is_owner %}
+                            <a href="{{ url_for('families.my_families') }}?user={{ profile_user.id }}"
+                               class="btn btn-sm btn-outline-success ml-2">
+                                <i class="fas fa-users"></i> Семьи пользователя
+                            </a>
+                        {% endif %}
                     </h3>
                     <p class="text-muted mb-1">
-                        <i class="fas fa-envelope mr-2"></i>{{ current_user.email }}
+                        <i class="fas fa-envelope mr-2"></i>{{ profile_user.email }}
                     </p>
                     <p class="text-muted small">
                         <i class="fas fa-calendar-alt mr-2"></i>
-                        На сайте с {{ current_user.created_date.strftime('%d.%m.%Y') if current_user.created_date else 'неизвестно' }}
+                        На сайте с {{ profile_user.created_date.strftime('%d.%m.%Y') if profile_user.created_date else 'неизвестно' }}
                     </p>
 
                     <hr>
 
-                    <!-- Кнопки действий -->
+                    <!-- Кнопки действий (только для владельца) -->
+                    {% if is_owner %}
                     <a href="{{ url_for('families.create_family') }}" class="btn btn-success btn-block rounded-pill mb-2">
                         <i class="fas fa-plus mr-2"></i>Создать новую семью
                     </a>
                     <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-block rounded-pill">
                         <i class="fas fa-sign-out-alt mr-2"></i>Выйти из аккаунта
                     </a>
+                    {% else %}
+                        <div class="alert alert-info text-center mb-0">
+                            <i class="fas fa-info-circle"></i> Вы просматриваете публичный профиль
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -94,22 +117,30 @@
                 <div class="card-header bg-success text-white rounded-top-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
-                            <i class="fas fa-users mr-2"></i>Мои семьи
+                            <i class="fas fa-users mr-2"></i>
+                            {% if is_owner %}
+                                Мои семьи
+                            {% else %}
+                                Семьи пользователя {{ profile_user.name }}
+                            {% endif %}
                         </h5>
+                        {% if is_owner %}
                         <a href="{{ url_for('families.my_families') }}" class="btn btn-light btn-sm">
                             Все семьи <i class="fas fa-arrow-right ml-1"></i>
                         </a>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="card-body">
                     {% if created_families or member_families %}
                         <div class="row">
-                            {% for family in (created_families + member_families)[:3] %}
+                            {% set all_families = created_families + member_families %}
+                            {% for family in all_families[:3] %}
                                 <div class="col-md-6 mb-3">
-                                    <div class="card h-100 {% if family.creator == current_user.id|string %}border-success{% else %}border-info{% endif %}">
+                                    <div class="card h-100 {% if family.creator == profile_user.id|string %}border-success{% else %}border-info{% endif %}">
                                         <div class="card-body">
-                                            <h6 class="card-title {% if family.creator == current_user.id|string %}text-success{% else %}text-info{% endif %}">
-                                                {% if family.creator == current_user.id|string %}
+                                            <h6 class="card-title {% if family.creator == profile_user.id|string %}text-success{% else %}text-info{% endif %}">
+                                                {% if family.creator == profile_user.id|string %}
                                                     <i class="fas fa-crown mr-1"></i>
                                                 {% else %}
                                                     <i class="fas fa-user-friends mr-1"></i>
@@ -132,23 +163,41 @@
                                 </div>
                             {% endfor %}
                         </div>
+                        {% if all_families|length > 3 %}
+                            <div class="text-center mt-2">
+                                <small class="text-muted">и ещё {{ all_families|length - 3 }} семей...</small>
+                            </div>
+                        {% endif %}
                     {% else %}
                         <div class="text-center py-4">
                             <i class="fas fa-tree fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">У вас пока нет семей</p>
+                            <p class="text-muted">
+                                {% if is_owner %}
+                                    У вас пока нет семей
+                                {% else %}
+                                    У пользователя {{ profile_user.name }} нет публичных семей
+                                {% endif %}
+                            </p>
+                            {% if is_owner %}
                             <a href="{{ url_for('families.create_family') }}" class="btn btn-success rounded-pill">
                                 <i class="fas fa-plus mr-2"></i>Создать первую семью
                             </a>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Статистика -->
+            <!-- Статистика (показываем всегда, но с пометкой для чужих) -->
             <div class="card shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-info text-white rounded-top-4">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-bar mr-2"></i>Краткая статистика
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        {% if is_owner %}
+                            Краткая статистика
+                        {% else %}
+                            Статистика пользователя {{ profile_user.name }}
+                        {% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -169,28 +218,35 @@
                         </div>
                         <div class="col-6 col-md-3 mb-3">
                             <div class="p-3 bg-light rounded-4">
-                                <i class="fas fa-history fa-2x text-primary mb-2"></i>
-                                <h4 class="mb-1">{{ total_edits }}</h4>
-                                <small class="text-muted">Действий</small>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <div class="p-3 bg-light rounded-4">
                                 <i class="fas fa-user-friends fa-2x text-info mb-2"></i>
                                 <h4 class="mb-1">{{ total_persons }}</h4>
                                 <small class="text-muted">Людей</small>
                             </div>
                         </div>
+                        {% if is_owner %}
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="p-3 bg-light rounded-4">
+                                <i class="fas fa-history fa-2x text-primary mb-2"></i>
+                                <h4 class="mb-1">{{ total_edits }}</h4>
+                                <small class="text-muted">Действий</small>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
+                    {% if not is_owner and (created_families|length + member_families|length) == 0 %}
+                    <div class="alert alert-warning text-center mb-0 mt-2">
+                        <i class="fas fa-lock"></i> Пользователь не имеет публичных семей
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Последняя активность -->
-            {% if recent_activities %}
+            <!-- Последняя активность (для владельца - полная, для гостей - только публичная) -->
+            {% if is_owner and recent_activities %}
             <div class="card shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-warning text-white rounded-top-4">
                     <h5 class="mb-0">
-                        <i class="fas fa-clock mr-2"></i>Последняя активность
+                        <i class="fas fa-clock mr-2"></i>Моя последняя активность
                     </h5>
                 </div>
                 <div class="card-body">
@@ -201,6 +257,8 @@
                                 <h6 class="mb-1">
                                     {% if activity.action_type == 'family_created' %}
                                         <i class="fas fa-plus-circle text-success"></i>
+                                    {% elif activity.action_type == 'family_edited' %}
+                                        <i class="fas fa-edit text-warning"></i>
                                     {% elif activity.action_type == 'person_added' %}
                                         <i class="fas fa-user-plus text-info"></i>
                                     {% elif activity.action_type == 'person_edited' %}
@@ -220,13 +278,84 @@
                         </div>
                         {% endfor %}
                     </div>
+                    {% if total_edits > 10 %}
+                    <div class="text-center mt-3">
+                        <small class="text-muted">Показано 10 из {{ total_edits }} действий</small>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
 
-            <!-- Блоки-заглушки для будущего функционала -->
+            <!-- Публичная активность (показывается гостям, если есть публичные действия) -->
+            {% if not is_owner and public_activities %}
+            <div class="card shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-info text-white rounded-top-4">
+                    <h5 class="mb-0">
+                        <i class="fas fa-globe mr-2"></i>Публичная активность {{ profile_user.name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for activity in public_activities %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    {% if activity.action_type == 'family_created' %}
+                                        <i class="fas fa-plus-circle text-success"></i>
+                                    {% elif activity.action_type == 'family_edited' %}
+                                        <i class="fas fa-edit text-warning"></i>
+                                    {% elif activity.action_type == 'person_added' %}
+                                        <i class="fas fa-user-plus text-info"></i>
+                                    {% elif activity.action_type == 'person_edited' %}
+                                        <i class="fas fa-user-edit text-warning"></i>
+                                    {% elif activity.action_type == 'person_deleted' %}
+                                        <i class="fas fa-user-minus text-danger"></i>
+                                    {% else %}
+                                        <i class="fas fa-info-circle text-muted"></i>
+                                    {% endif %}
+                                    {{ activity.action_description }}
+                                </h6>
+                                <small class="text-muted">{{ activity.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-users mr-1"></i>Семья:
+                                <a href="{{ url_for('families.family_page', family_id=activity.family_id) }}">
+                                    Семья #{{ activity.family_id }}
+                                </a>
+                            </small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if total_edits > 10 %}
+                    <div class="text-center mt-3">
+                        <small class="text-muted">Показано 10 из {{ total_edits }} публичных действий</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Если у пользователя нет публичных семей и нет активности -->
+            {% if not is_owner and not public_activities and (created_families|length + member_families|length) > 0 %}
+            <div class="card shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-secondary text-white rounded-top-4">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lock mr-2"></i>Публичная активность {{ profile_user.name }}
+                    </h5>
+                </div>
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-user-secret fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">
+                        У пользователя {{ profile_user.name }} нет публичных семей или история изменений скрыта
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Блоки-заглушки для будущего функционала (только для владельца) -->
+            {% if is_owner %}
             <div class="row">
-                <!-- Настройки профиля -->
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm rounded-4 h-100 bg-light">
                         <div class="card-body text-center py-5">
@@ -237,7 +366,6 @@
                     </div>
                 </div>
 
-                <!-- Достижения -->
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm rounded-4 h-100 bg-light">
                         <div class="card-body text-center py-5">
@@ -247,29 +375,8 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Социальные связи -->
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow-sm rounded-4 h-100 bg-light">
-                        <div class="card-body text-center py-5">
-                            <i class="fas fa-share-alt fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">Социальные связи</h5>
-                            <p class="text-muted small mb-0">Друзья и подписчики</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Уведомления -->
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow-sm rounded-4 h-100 bg-light">
-                        <div class="card-body text-center py-5">
-                            <i class="fas fa-bell fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">Уведомления</h5>
-                            <p class="text-muted small mb-0">Центр уведомлений</p>
-                        </div>
-                    </div>
-                </div>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -288,7 +395,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let selectedFile = null;
 
-    // Drag and drop эффекты
+    // Скрипт для загрузки аватарки (только если пользователь — владелец)
+    {% if is_owner %}
     if (dropArea) {
         dropArea.addEventListener('dragover', function(e) {
             e.preventDefault();
@@ -316,7 +424,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Эффекты при наведении мыши
         dropArea.addEventListener('mouseenter', function() {
             dropArea.style.transform = 'scale(1.05)';
             if (overlay) overlay.style.display = 'flex';
@@ -328,7 +435,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Обработчик выбора файла через input
     if (fileInput) {
         fileInput.addEventListener('change', function() {
             if (this.files.length > 0) {
@@ -338,13 +444,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleFile(file) {
-        // Проверка типа файла
         if (!file.type.startsWith('image/')) {
             alert('Пожалуйста, выберите изображение!');
             return;
         }
 
-        // Проверка размера (5 МБ)
         if (file.size > 5 * 1024 * 1024) {
             alert('Файл слишком большой! Максимальный размер: 5 МБ');
             return;
@@ -352,7 +456,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         selectedFile = file;
 
-        // Показываем предпросмотр
         const reader = new FileReader();
         reader.onload = function(e) {
             if (previewImage) {
@@ -365,7 +468,6 @@ document.addEventListener('DOMContentLoaded', function() {
         reader.readAsDataURL(file);
     }
 
-    // Отмена загрузки
     if (cancelBtn) {
         cancelBtn.addEventListener('click', function() {
             selectedFile = null;
@@ -376,7 +478,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Загрузка на сервер
     if (uploadBtn) {
         uploadBtn.addEventListener('click', function() {
             if (!selectedFile) {
@@ -387,13 +488,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('avatar', selectedFile);
 
-            // Показываем прогресс-бар
             if (progressBar) {
                 progressBar.style.display = 'block';
                 if (progressBarInner) progressBarInner.style.width = '0%';
             }
 
-            // Отключаем кнопки на время загрузки
             if (uploadBtn) uploadBtn.disabled = true;
             if (cancelBtn) cancelBtn.disabled = true;
 
@@ -408,7 +507,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             xhr.addEventListener('load', function() {
                 if (xhr.status === 200 || xhr.status === 302) {
-                    // Успешно загружено - обновляем страницу
                     window.location.reload();
                 } else {
                     alert('Ошибка загрузки! Попробуйте еще раз.');
@@ -429,6 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
             xhr.send(formData);
         });
     }
+    {% endif %}
 });
 </script>
 
