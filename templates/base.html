@@ -10,6 +10,10 @@
           crossorigin="anonymous">
     <!-- Font Awesome 6 (иконки для поиска, логотипа, соцсетей) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Темная тема -->
+    <link rel="stylesheet" href="/static/css/dark_theme.css">
+
     <style>
         /* ---------- ОБЩИЕ ЗЕЛЕНЫЕ СВЕТЛЫЕ ТОНА ---------- */
         body {
@@ -18,6 +22,7 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         /* Прижимаем футер */
@@ -32,6 +37,7 @@
             box-shadow: 0 8px 20px rgba(60, 100, 40, 0.1);
             border-bottom: 1px solid #b8daaa;
             padding: 0.6rem 1rem;
+            transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
         /* Логотип — зелёный акцент, свежий */
@@ -59,6 +65,7 @@
             letter-spacing: -0.3px;
             margin-bottom: 0;
             font-size: 1.8rem;
+            transition: background 0.3s ease;
         }
         .navbar-brand:hover {
             opacity: 0.9;
@@ -166,6 +173,7 @@
             box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.06);
             border: 1px solid rgba(100, 150, 80, 0.3);
             min-height: 55vh;
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .container {
@@ -179,6 +187,7 @@
             padding: 2rem 0 1.5rem;
             margin-top: 1.5rem;
             border-top: 1px solid #2b6e3c;
+            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
         .footer-emerald a {
             color: #bde5c4;
@@ -377,6 +386,29 @@
             transform: translateY(-2px);
         }
 
+        /* Кнопка переключения темы в навбаре */
+        .navbar-theme-toggle {
+            background: none;
+            border: 1px solid rgba(47, 130, 67, 0.3);
+            color: #2f8243;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            margin-left: 10px;
+        }
+
+        .navbar-theme-toggle:hover {
+            background: rgba(47, 130, 67, 0.1);
+            border-color: #2f8243;
+            transform: rotate(30deg);
+        }
+
         /* Адаптивность: на маленьких экранах поиск перестраивается */
         @media (max-width: 992px) {
             .search-wrapper {
@@ -408,6 +440,16 @@
 </head>
 <body>
 
+<!-- Загрузка темы из localStorage сразу при загрузке страницы -->
+<script>
+    (function() {
+        var savedTheme = localStorage.getItem('familyTreeTheme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+    })();
+</script>
+
 <div class="wrapper">
     <header>
         <!-- ВЕРХНЕЕ МЕНЮ -->
@@ -438,25 +480,33 @@
 
                     <!-- КНОПКИ ВХОДА И РЕГИСТРАЦИИ (справа) -->
                     {% if current_user.is_authenticated %}
-                    <div class="auth-buttons ml-auto">
+                    <div class="auth-buttons ml-auto d-flex align-items-center">
                         <a href="{{ url_for('auth.profile') }}" class="btn btn-leaf-outline mr-2">
                             <i class="fas fa-user mr-1"></i> {{ current_user.name }}
                         </a>
                         <a href="{{ url_for('families.my_families') }}" class="btn btn-leaf-outline mr-2">
                             <i class="fas fa-users mr-1"></i> Мои семьи
                         </a>
-                        <a href="{{ url_for('auth.logout') }}" class="btn btn-leaf-outline">
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-leaf-outline mr-2">
                             <i class="fas fa-sign-out-alt mr-1"></i> Выйти
                         </a>
+                        <!-- Переключатель темы в навбаре -->
+                        <button class="navbar-theme-toggle" id="navbarThemeToggle" title="Переключить тему">
+                            <i class="fas fa-moon"></i>
+                        </button>
                     </div>
                     {% else %}
-                    <div class="auth-buttons ml-auto">
+                    <div class="auth-buttons ml-auto d-flex align-items-center">
                         <a href="{{ url_for('auth.login') }}" class="btn btn-leaf-outline mr-2">
                             <i class="fas fa-sign-in-alt mr-1"></i> Войти
                         </a>
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-leaf-solid">
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-leaf-solid mr-2">
                             <i class="fas fa-user-plus mr-1"></i> Регистрация
                         </a>
+                        <!-- Переключатель темы в навбаре -->
+                        <button class="navbar-theme-toggle" id="navbarThemeToggle" title="Переключить тему">
+                            <i class="fas fa-moon"></i>
+                        </button>
                     </div>
                     {% endif %}
                 </div>
@@ -575,20 +625,60 @@
         integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
         crossorigin="anonymous"></script>
 
+<!-- СКРИПТ ДЛЯ УПРАВЛЕНИЯ ТЕМОЙ -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Функция обновления всех иконок переключателей темы
+        function updateAllThemeIcons() {
+            var isDark = document.body.classList.contains('dark-theme');
+            var iconClass = isDark ? 'fa-sun' : 'fa-moon';
+
+            // Обновляем все переключатели темы на странице
+            var themeToggles = document.querySelectorAll('.navbar-theme-toggle, .theme-toggle-btn');
+            themeToggles.forEach(function(btn) {
+                var icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas ' + iconClass;
+                }
+            });
+        }
+
+        // Функция переключения темы
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+
+            // Сохраняем выбор в localStorage
+            var isDark = document.body.classList.contains('dark-theme');
+            localStorage.setItem('familyTreeTheme', isDark ? 'dark' : 'light');
+
+            updateAllThemeIcons();
+        }
+
+        // Инициализация иконок при загрузке
+        updateAllThemeIcons();
+
+        // Навешиваем обработчики на все переключатели темы
+        var themeToggles = document.querySelectorAll('.navbar-theme-toggle, .theme-toggle-btn');
+        themeToggles.forEach(function(btn) {
+            btn.addEventListener('click', toggleTheme);
+        });
+    });
+</script>
+
 <!-- СКРИПТ ДЛЯ МОДАЛЬНОГО ОКНА ПОИСКА -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchTriggerBtn = document.getElementById('searchTriggerBtn');
-    const searchOverlay = document.getElementById('searchOverlay');
-    const searchModal = document.getElementById('searchModal');
-    const searchCloseBtn = document.getElementById('searchCloseBtn');
-    const searchModalInput = document.getElementById('searchModalInput');
-    const searchModalSubmit = document.getElementById('searchModalSubmit');
-    const categoryBtns = document.querySelectorAll('.search-category-btn');
+    var searchTriggerBtn = document.getElementById('searchTriggerBtn');
+    var searchOverlay = document.getElementById('searchOverlay');
+    var searchModal = document.getElementById('searchModal');
+    var searchCloseBtn = document.getElementById('searchCloseBtn');
+    var searchModalInput = document.getElementById('searchModalInput');
+    var searchModalSubmit = document.getElementById('searchModalSubmit');
+    var categoryBtns = document.querySelectorAll('.search-category-btn');
 
-    let selectedCategory = 'families';
+    var selectedCategory = 'families';
 
-    const placeholders = {
+    var placeholders = {
         families: 'Введите название семьи...',
         persons: 'Введите имя родственника...',
         users: 'Введите имя пользователя...'
