@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Форма поиска -->
+    <div class="card shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-success text-white rounded-top-4">
+            <h5 class="mb-0">
+                <i class="fas fa-search"></i> Поиск по сайту
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('search.search') }}" class="row g-3">
+                <div class="col-md-3">
+                    <select name="type" class="form-control">
+                        <option value="users" {% if search_type == 'users' %}selected{% endif %}>
+                            👤 Пользователи
+                        </option>
+                        <option value="families" {% if search_type == 'families' %}selected{% endif %} disabled>
+                            👨‍👩‍👧‍👦 Семьи (скоро)
+                        </option>
+                        <option value="persons" {% if search_type == 'persons' %}selected{% endif %} disabled>
+                            🧑 Родственники (скоро)
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control"
+                               placeholder="Поиск пользователей по имени или email..."
+                               value="{{ query }}">
+                        <button class="btn btn-success" type="submit">
+                            <i class="fas fa-search"></i> Найти
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Результаты поиска -->
+    {% if query %}
+    <div class="card shadow-sm rounded-4">
+        <div class="card-header bg-info text-white rounded-top-4">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> Результаты поиска по запросу "{{ query }}"
+                <span class="badge bg-light text-dark ms-2">{{ result_count }} найдено</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if results %}
+                <div class="row">
+                    {% for result in results %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        {% if result.type == 'user' %}
+                                            {% if result.avatar %}
+                                                <img src="{{ result.avatar }}" class="rounded-circle me-3"
+                                                     style="width: 50px; height: 50px; object-fit: cover;">
+                                            {% else %}
+                                                <div class="rounded-circle bg-success d-flex align-items-center justify-content-center me-3"
+                                                     style="width: 50px; height: 50px;">
+                                                    <i class="fas fa-user fa-2x text-white"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-0">{{ result.name }}</h6>
+                                                <small class="text-muted">{{ result.email }}</small>
+                                            </div>
+                                        {% elif result.type == 'family' %}
+                                            <div class="rounded-circle bg-info d-flex align-items-center justify-content-center me-3"
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="fas fa-tree fa-2x text-white"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ result.name }}</h6>
+                                                <small class="text-muted">Создатель ID: {{ result.creator_id }}</small>
+                                            </div>
+                                        {% elif result.type == 'person' %}
+                                            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-3"
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="fas fa-user-friends fa-2x text-white"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ result.name }}</h6>
+                                                <small class="text-muted">Семья: {{ result.family_name }}</small>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-3">
+                                        {% if result.type == 'user' %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-alt"></i>
+                                                На сайте с {{ result.created_date.strftime('%d.%m.%Y') if result.created_date else 'неизвестно' }}
+                                            </small>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-tree"></i>
+                                                Публичных семей: {{ result.families_count }}
+                                            </small>
+                                        {% elif result.type == 'family' %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-users"></i>
+                                                Участников: {{ result.members_count }}
+                                            </small>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-alt"></i>
+                                                Создана: {{ result.created_date.strftime('%d.%m.%Y') if result.created_date else 'неизвестно' }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="d-grid">
+                                        {% if result.type == 'user' %}
+                                            <a href="{{ url_for('auth.view_profile', user_id=result.id) }}"
+                                               class="btn btn-outline-success">
+                                                <i class="fas fa-user"></i> Перейти к профилю
+                                            </a>
+                                        {% elif result.type == 'family' %}
+                                            <a href="{{ url_for('families.family_page', family_id=result.id) }}"
+                                               class="btn btn-outline-success">
+                                                <i class="fas fa-tree"></i> Перейти к семье
+                                            </a>
+                                        {% elif result.type == 'person' %}
+                                            <a href="{{ url_for('families.family_page', family_id=result.family_id) }}"
+                                               class="btn btn-outline-success">
+                                                <i class="fas fa-user-friends"></i> Перейти к семье
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">Ничего не найдено</h5>
+                    <p class="text-muted">Попробуйте изменить запрос или поискать в другой категории</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+        <div class="card shadow-sm rounded-4">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Введите поисковый запрос</h5>
+                <p class="text-muted">Вы можете искать пользователей по имени или email</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

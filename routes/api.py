@@ -67,35 +67,33 @@ def get_persons(family_id):
         db_sess.close()
 
 
-@api_bp.route('/v1/family/<int:family_id>/tree.json', methods=['GET'])
-@login_required
+@api_bp.route('/v1/family/<int:family_id>/tree.json')
 def api_family_tree_json(family_id):
-    """
-    API: получить данные семейного дерева в формате JSON
-    URL: /api/v1/family/1/tree.json
-    """
+    """Публичное API для получения данных семейного дерева"""
     db_sess = db_session.create_session()
     try:
-        # 1. Получаем семью
         family = db_sess.query(Family).filter(Family.id == family_id).first()
 
         if not family:
             return jsonify({"success": False, "error": "Семья не найдена"}), 404
 
-        # 2. Проверяем доступ
-        members = json.loads(family.members) if family.members else []
-        if str(current_user.id) not in members:
-            return jsonify({"success": False, "error": "Нет доступа"}), 403
+        # Проверяем доступ (публичная семья или участник)
+        is_public = family.status == True
+        is_member = False
 
-        # 3. Получаем данные о родственниках
+        if current_user.is_authenticated:
+            members = json.loads(family.members) if family.members else []
+            is_member = str(current_user.id) in members
+
+        if not is_public and not is_member:
+            return jsonify({"success": False, "error": "Доступ запрещён"}), 403
+
         family_data = json.loads(family.data) if family.data else {}
         persons = family_data.get("persons", {})
 
-        # 4. Генерируем структуру дерева
         generator = FamilyTreeGenerator(persons, family.family_name)
-        tree_data = generator.generate_tree()
+        tree_data = generator._build_tree()
 
-        # 5. Возвращаем JSON
         return jsonify({
             "success": True,
             "family_id": family_id,

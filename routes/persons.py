@@ -25,7 +25,7 @@ def add_person(family_id):
             return redirect(url_for('families.my_families'))
 
         members = json.loads(family.members) if family.members else []
-        if str(current_user.id) not in members:
+        if not (family.is_creator(current_user.id) or family.is_editor(current_user.id)):
             flash('У вас нет прав для добавления родственников', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
@@ -148,8 +148,8 @@ def edit_person(family_id, person_id):
             return redirect(url_for('families.my_families'))
 
         members = json.loads(family.members) if family.members else []
-        if str(current_user.id) not in members:
-            flash('У вас нет прав для редактирования', 'danger')
+        if not (family.is_creator(current_user.id) or family.is_editor(current_user.id)):
+            flash('У вас нет прав для редактирования родственников', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
         family_data = init_family_data(family)
@@ -302,8 +302,8 @@ def delete_person(family_id, person_id):
             return redirect(url_for('families.my_families'))
 
         members = json.loads(family.members) if family.members else []
-        if str(current_user.id) not in members:
-            flash('У вас нет прав для удаления', 'danger')
+        if not family.is_creator(current_user.id):
+            flash('Только создатель семьи может удалять родственников', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
         family_data = init_family_data(family)
@@ -359,19 +359,27 @@ def delete_person(family_id, person_id):
 
 
 @persons_bp.route('/<int:family_id>/person/<person_id>')
-@login_required
 def person_detail(family_id, person_id):
+    """Страница детальной информации о родственнике"""
     db_sess = db_session.create_session()
-    try:  # ← ДОБАВЛЕН try
+    try:
         family = db_sess.query(Family).filter(Family.id == family_id).first()
 
         if not family:
             flash('Семья не найдена', 'danger')
-            return redirect(url_for('families.my_families'))
+            return redirect(url_for('index'))
+
+        # Определяем права доступа
+        current_user_id_str = str(current_user.id) if current_user.is_authenticated else None
+        is_public = family.status == True
+
         members = json.loads(family.members) if family.members else []
-        if str(current_user.id) not in members:
-            flash('У вас нет доступа', 'danger')
-            return redirect(url_for('families.family_page', family_id=family_id))
+        is_member = current_user_id_str in members if current_user_id_str else False
+
+        # Проверяем доступ к просмотру
+        if not is_public and not is_member:
+            flash('Доступ запрещён', 'danger')
+            return redirect(url_for('index'))
 
         family_data = init_family_data(family)
         persons = family_data.get("persons", {})
@@ -381,9 +389,16 @@ def person_detail(family_id, person_id):
             flash('Родственник не найден', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
+        # Права на редактирование
+        editors = json.loads(family.editors) if family.editors else []
+        is_editor = current_user_id_str in editors if current_user_id_str else False
+        is_creator = family.creator == current_user_id_str if current_user_id_str else False
+        user_can_edit = is_creator or is_editor or is_member
+
         return render_template('person_detail.html',
                                family=family,
                                person=person,
-                               persons=persons)
+                               persons=persons,
+                               user_can_edit=user_can_edit)
     finally:
         db_sess.close()

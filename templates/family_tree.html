@@ -16,11 +16,10 @@
             </div>
         </div>
         <div class="card-body">
-            <!-- Вкладки для разных видов визуализации -->
             <ul class="nav nav-tabs" id="treeTab" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active" id="graph-tab" data-toggle="tab" href="#graph" role="tab">
-                        <i class="fas fa-project-diagram"></i> Граф связей
+                        <i class="fas fa-project-diagram"></i> Дерево
                     </a>
                 </li>
                 <li class="nav-item">
@@ -36,13 +35,29 @@
             </ul>
 
             <div class="tab-content mt-4">
-                <!-- Вкладка с графом -->
+                <!-- Вкладка с деревом (vis‑network) -->
                 <div class="tab-pane fade show active" id="graph" role="tabpanel">
-                    <div id="tree-chart" style="width: 100%; height: 600px;"></div>
-                    <p class="text-muted text-center mt-2">
-                        <i class="fas fa-info-circle"></i>
-                        Зелёные узлы — мужчины, жёлтые — женщины. Серые — умершие.
-                    </p>
+                    <div class="d-flex align-items-center mb-3">
+                        <input type="text" id="searchBox" class="form-control form-control-sm" placeholder="🔍 Поиск по имени..." style="max-width: 250px;" oninput="searchPerson()">
+                        <div class="ml-3 legend-small">
+                            <span class="badge badge-pill" style="background:#d4f0d9; color:#4eac60;">Муж</span>
+                            <span class="badge badge-pill ml-1" style="background:#fff3cd; color:#f1c40f;">Жен</span>
+                            <span class="ml-2"><span style="display:inline-block; width:12px; height:2px; background:#555; vertical-align:middle;"></span> родитель</span>
+                            <span class="ml-2"><span style="display:inline-block; width:12px; border-top:2px dashed #e74c3c; vertical-align:middle;"></span> супруг</span>
+                        </div>
+                    </div>
+                    <div class="d-flex" style="height: 600px;">
+                        <div id="treeContainer" style="flex:1; height:100%; background:#f8fff6; border-radius:12px; border:1px solid #d4e8ca;"></div>
+                        <div id="sidebar" class="sidebar" style="width:0; overflow:hidden; background:white; box-shadow:-2px 0 8px rgba(0,0,0,0.05); transition:width 0.3s; border-left:1px solid #eee;">
+                            <div class="p-3" style="width:300px; height:100%; overflow-y:auto;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0">👤 Информация</h5>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="closeSidebar()">✖</button>
+                                </div>
+                                <div id="personDetails">Нажмите на человека в дереве</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Вкладка с текстовым деревом -->
@@ -58,26 +73,11 @@
                                 <div class="card-body">
                                     <h5><i class="fas fa-users"></i> Общая статистика</h5>
                                     <table class="table">
-                                        <tr>
-                                            <th>Всего родственников:</th>
-                                            <td>{{ chartjs_data.total_count }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Мужчины:</th>
-                                            <td>{{ chartjs_data.male_count }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Женщины:</th>
-                                            <td>{{ chartjs_data.female_count }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Живые:</th>
-                                            <td>{{ chartjs_data.living_count }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Умершие:</th>
-                                            <td>{{ chartjs_data.deceased_count }}</td>
-                                        </tr>
+                                        <tr><th>Всего родственников:</th><td>{{ chartjs_data.total_count }}</td></tr>
+                                        <tr><th>Мужчины:</th><td>{{ chartjs_data.male_count }}</td></tr>
+                                        <tr><th>Женщины:</th><td>{{ chartjs_data.female_count }}</td></tr>
+                                        <tr><th>Живые:</th><td>{{ chartjs_data.living_count }}</td></tr>
+                                        <tr><th>Умершие:</th><td>{{ chartjs_data.deceased_count }}</td></tr>
                                     </table>
                                 </div>
                             </div>
@@ -97,125 +97,112 @@
     </div>
 </div>
 
-<!-- Подключаем ECharts -->
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<!-- vis‑network -->
+<script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+<!-- Chart.js для статистики -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // Данные для графа
-    const treeData = {{ tree_data|safe }};
+    const treeData = {{ tree_data | tojson | safe }};
 
-    // Рендерим граф с помощью ECharts
-    const chartDom = document.getElementById('tree-chart');
-    const myChart = echarts.init(chartDom);
+    const nodes = new vis.DataSet(treeData.nodes.map(n => ({
+        id: n.id,
+        label: n.name + '\n' + n.lifespan,
+        group: n.gender,
+        level: n.generation,
+        title: ''
+    })));
+    const edges = new vis.DataSet(treeData.edges.map(e => ({
+        from: e.source,
+        to: e.target,
+        arrows: e.type === 'child' ? 'to' : '',
+        dashes: e.type === 'spouse',
+        color: e.type === 'spouse' ? { color: '#e74c3c' } : { color: '#555' },
+        smooth: { type: 'curvedCW', roundness: 0.1 }
+    })));
 
-    // Подготавливаем данные для ECharts
-    const nodes = treeData.nodes.map(node => ({
-        id: node.id,
-        name: node.name.split(' ').slice(0, 2).join(' ') || node.name,
-        symbolSize: Math.min(40, 20 + (node.children_count || 0) * 2),
-        category: node.gender === 'male' ? 0 : 1,
-        itemStyle: {
-            color: node.status === 'deceased' ? '#95a5a6' : (node.gender === 'male' ? '#4eac60' : '#f1c40f')
-        },
-        label: {
-            show: true,
-            position: 'bottom',
-            fontSize: 10,
-            formatter: '{b}',
-            offset: [0, 5]
-        }
-    }));
-
-    const links = treeData.links.map(link => ({
-        source: link.source,
-        target: link.target,
-        lineStyle: {
-            color: link.type === 'spouse' ? '#e74c3c' : '#3498db',
-            width: 2,
-            curveness: link.type === 'spouse' ? 0.5 : 0.2,
-            type: 'solid'
-        }
-    }));
-
-    const categories = [
-        { name: 'Мужской', itemStyle: { color: '#4eac60' } },
-        { name: 'Женский', itemStyle: { color: '#f1c40f' } }
-    ];
-
-    const option = {
-        title: {
-            text: 'Схема семейных связей',
-            subtext: 'Красные линии — супруги, синие — родители-дети',
-            left: 'center',
-            top: 0
-        },
-        tooltip: {
-            trigger: 'item',
-            formatter: function(params) {
-                if (params.dataType === 'node') {
-                    const node = treeData.nodes.find(n => n.id === params.data.id);
-                    return `<strong>${node.name}</strong><br/>
-                            ${node.lifespan || 'Даты не указаны'}<br/>
-                            ${node.birth_place ? `Место рождения: ${node.birth_place}<br/>` : ''}
-                            Детей: ${node.children_count || 0}`;
-                } else if (params.dataType === 'edge') {
-                    const link = treeData.links.find(l => l.source === params.data.source && l.target === params.data.target);
-                    return link.title || 'Семейная связь';
-                }
-                return params.name;
+    const container = document.getElementById('treeContainer');
+    const data = { nodes, edges };
+    const options = {
+        layout: {
+            hierarchical: {
+                direction: 'UD',
+                sortMethod: 'directed',
+                nodeSpacing: 150,
+                levelSeparation: 130,
+                parentCentralization: true
             }
         },
-        series: [{
-            type: 'graph',
-            layout: 'force',
-            force: {
-                repulsion: 500,
-                edgeLength: 150,
-                gravity: 0.1,
-                friction: 0.1,
-                layoutAnimation: true
-            },
-            data: nodes,
-            links: links,
-            categories: categories,
-            roam: true,
-            draggable: true,
-            focusNodeAdjacency: true,
-            edgeSymbol: ['none', 'arrow'],
-            edgeSymbolSize: [0, 8],
-            label: {
-                show: true,
-                position: 'bottom',
-                fontSize: 10,
-                formatter: '{b}'
-            },
-            emphasis: {
-                focus: 'adjacency',
-                lineStyle: {
-                    width: 3
-                }
-            },
-            lineStyle: {
-                color: 'source',
-                curveness: 0.3,
-                width: 2
-            }
-        }]
+        edges: { smooth: { type: 'curvedCW', roundness: 0.1 } },
+        nodes: {
+            shape: 'box',
+            margin: 10,
+            widthConstraint: { minimum: 130 },
+            font: { size: 13, face: 'Segoe UI' }
+        },
+        groups: {
+            male: { color: { background: '#d4f0d9', border: '#4eac60', highlight: { border: '#2d6a4f', background: '#b7e4c7' } } },
+            female: { color: { background: '#fff3cd', border: '#f1c40f', highlight: { border: '#d4ac0d', background: '#fceabb' } } }
+        },
+        physics: false,
+        interaction: { hover: true }
     };
+    const network = new vis.Network(container, data, options);
 
-    myChart.setOption(option);
+    function openSidebar(personId) {
+        const person = treeData.nodes.find(n => n.id === personId);
+        if (!person) return;
+        document.getElementById('personDetails').innerHTML = `
+            <strong>${person.name}</strong><br>
+            <div class="mt-2"><b>Пол:</b> ${person.gender === 'male' ? 'Мужской' : 'Женский'}</div>
+            <div><b>Родился:</b> ${person.birth_date || '—'}</div>
+            <div><b>Умер:</b> ${person.death_date || '—'}</div>
+            <div><b>Место рождения:</b> ${person.birth_place || '—'}</div>
+            <div><b>Биография:</b> ${person.biography || '—'}</div>
+            <div><b>Дети:</b> ${(person.children || []).map(cid => {
+                const ch = treeData.nodes.find(n => n.id === cid);
+                return ch ? ch.name : cid;
+            }).join(', ') || 'нет'}</div>
+            <div><b>Супруги:</b> ${(person.spouses || []).map(sid => {
+                const sp = treeData.nodes.find(n => n.id === sid);
+                return sp ? sp.name : sid;
+            }).join(', ') || 'нет'}</div>
+        `;
+        document.getElementById('sidebar').style.width = '300px';
+    }
 
-    // Адаптация под размер окна
-    window.addEventListener('resize', () => myChart.resize());
+    function closeSidebar() {
+        document.getElementById('sidebar').style.width = '0';
+    }
 
-    // График поколений
-    const generationsData = {{ chartjs_data.generations|tojson|safe }};
+    network.on('click', function(params) {
+        if (params.nodes.length > 0) {
+            openSidebar(params.nodes[0]);
+        } else {
+            closeSidebar();
+        }
+    });
+
+    function searchPerson() {
+        const q = document.getElementById('searchBox').value.trim().toLowerCase();
+        if (!q) { network.unselectAll(); return; }
+        const allNodes = network.body.data.nodes.get();
+        const found = allNodes.find(n => n.label && n.label.toLowerCase().includes(q));
+        if (found) {
+            network.selectNodes([found.id]);
+            network.focus(found.id, { scale: 1.5, animation: true });
+        } else {
+            network.unselectAll();
+            network.fit({ animation: true });
+        }
+    }
+
+    // Статистика (график поколений)
+    const generationsData = {{ chartjs_data.generations | tojson | safe }};
     const generations = Object.keys(generationsData);
     const counts = generations.map(gen => generationsData[gen].length);
 
-    const ctx = document.getElementById('generations-chart').getContext('2d');
-    new Chart(ctx, {
+    new Chart(document.getElementById('generations-chart').getContext('2d'), {
         type: 'bar',
         data: {
             labels: generations.map(gen => `${parseInt(gen) + 1}-е поколение`),
@@ -231,35 +218,35 @@
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: {
-                    position: 'top'
-                },
-                title: {
-                    display: true,
-                    text: 'Распределение родственников по поколениям'
-                }
+                legend: { position: 'top' },
+                title: { display: true, text: 'Распределение родственников по поколениям' }
             }
         }
     });
 </script>
 
 <style>
-    #tree-chart {
+    #treeContainer {
         background: linear-gradient(145deg, #f8fff6, #f0f7ec);
-        border-radius: 16px;
-        border: 1px solid #d4e8ca;
+        border-radius: 12px;
+        overflow: hidden;
     }
-
+    .legend-small {
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+    }
+    .sidebar {
+        border-radius: 0 12px 12px 0;
+    }
     .nav-tabs .nav-link {
         color: #2e7d3e;
         font-weight: 500;
     }
-
     .nav-tabs .nav-link.active {
         color: #1b5e2a;
         border-bottom: 2px solid #2e7d3e;
     }
-
     pre {
         white-space: pre-wrap;
         word-wrap: break-word;
