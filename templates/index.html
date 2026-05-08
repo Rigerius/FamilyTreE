@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<section class="hero-section text-center py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 text-lg-left mb-5 mb-lg-0">
+                <span class="badge badge-success px-3 py-2 mb-3" style="font-size: 0.9rem; border-radius: 50px;">
+                    <i class="fas fa-star mr-1"></i> Более 1000 семей уже с нами
+                </span>
+                <h1 class="display-4 font-weight-bold mb-4" style="line-height: 1.2;">
+                    Сохраните историю<br>
+                    <span style="background: linear-gradient(135deg, #2f8243, #4eac60); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        вашей семьи
+                    </span>
+                </h1>
+                <p class="lead text-muted mb-4" style="font-size: 1.2rem;">
+                    Создавайте генеалогические деревья, добавляйте родственников, 
+                    документируйте важные события и делитесь историей с близкими.
+                </p>
+                <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3">
+                    {% if not current_user.is_authenticated %}
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg rounded-pill px-5 py-3 shadow-lg" 
+                           style="background: linear-gradient(135deg, #2f8243, #4eac60); border: none; font-size: 1.1rem;">
+                            <i class="fas fa-user-plus mr-2"></i> Присоединиться бесплатно
+                        </a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-success btn-lg rounded-pill px-4 py-3">
+                            <i class="fas fa-sign-in-alt mr-2"></i> Войти
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('families.my_families') }}" class="btn btn-success btn-lg rounded-pill px-5 py-3 shadow-lg"
+                           style="background: linear-gradient(135deg, #2f8243, #4eac60); border: none; font-size: 1.1rem;">
+                            <i class="fas fa-users mr-2"></i> Мои семьи
+                        </a>
+                        <a href="{{ url_for('families.create_family') }}" class="btn btn-outline-success btn-lg rounded-pill px-4 py-3">
+                            <i class="fas fa-plus mr-2"></i> Создать семью
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="position-relative">
+                    <!-- SVG иллюстрация семейного дерева -->
+                    <div class="hero-illustration p-4">
+                        <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto;">
+                            <!-- Фон -->
+                            <defs>
+                                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#f0f8ee;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#e0f0d8;stop-opacity:1" />
+                                </linearGradient>
+                                <filter id="shadow">
+                                    <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.15"/>
+                                </filter>
+                            </defs>
+                            <rect width="500" height="400" rx="30" fill="url(#bgGrad)"/>
+                            
+                            <!-- Ветви дерева -->
+                            <g stroke="#5a8a4a" stroke-width="3" fill="none" opacity="0.6">
+                                <path d="M250 320 Q250 250 250 180" stroke-width="5"/>
+                                <path d="M250 220 Q180 180 140 120" />
+                                <path d="M250 220 Q320 180 360 120" />
+                                <path d="M140 120 Q100 80 80 40" />
+                                <path d="M140 120 Q170 80 180 40" />
+                                <path d="M360 120 Q330 80 320 40" />
+                                <path d="M360 120 Q400 80 420 40" />
+                            </g>
+                            
+                            <!-- Узлы-листья (люди) -->
+                            <g filter="url(#shadow)">
+                                <!-- Корень -->
+                                <circle cx="250" cy="340" r="28" fill="#2f8243" stroke="white" stroke-width="3"/>
+                                <text x="250" y="348" text-anchor="middle" fill="white" font-size="20" font-family="Arial">👤</text>
+                                <text x="250" y="388" text-anchor="middle" fill="#2d5a27" font-size="12" font-family="Arial" font-weight="bold">Основатель</text>
+                                
+                                <!-- Уровень 2 -->
+                                <circle cx="140" cy="120" r="22" fill="#4eac60" stroke="white" stroke-width="2.5"/>
+                                <text x="140" y="128" text-anchor="middle" fill="white" font-size="15">👤</text>
+                                
+                                <circle cx="360" cy="120" r="22" fill="#4eac60" stroke="white" stroke-width="2.5"/>
+                                <text x="360" y="128" text-anchor="middle" fill="white" font-size="15">👤</text>
+                                
+                                <!-- Уровень 3 -->
+                                <circle cx="80" cy="35" r="18" fill="#78c48e" stroke="white" stroke-width="2"/>
+                                <text x="80" y="41" text-anchor="middle" fill="white" font-size="12">👤</text>
+                                
+                                <circle cx="180" cy="35" r="18" fill="#78c48e" stroke="white" stroke-width="2"/>
+                                <text x="180" y="41" text-anchor="middle" fill="white" font-size="12">👤</text>
+                                
+                                <circle cx="320" cy="35" r="18" fill="#78c48e" stroke="white" stroke-width="2"/>
+                                <text x="320" y="41" text-anchor="middle" fill="white" font-size="12">👤</text>
+                                
+                                <circle cx="420" cy="35" r="18" fill="#78c48e" stroke="white" stroke-width="2"/>
+                                <text x="420" y="41" text-anchor="middle" fill="white" font-size="12">👤</text>
+                            </g>
+                            
+                            <!-- Декоративные листочки -->
+                            <g fill="#4eac60" opacity="0.4">
+                                <ellipse cx="270" cy="260" rx="8" ry="4" transform="rotate(-30 270 260)"/>
+                                <ellipse cx="230" cy="270" rx="6" ry="3" transform="rotate(20 230 270)"/>
+                                <ellipse cx="160" cy="160" rx="6" ry="3" transform="rotate(-15 160 160)"/>
+                                <ellipse cx="350" cy="160" rx="7" ry="3.5" transform="rotate(25 350 160)"/>
+                            </g>
+                            
+                            <!-- Текст -->
+                            <text x="250" y="20" text-anchor="middle" fill="#2f8243" font-size="16" font-family="Arial" font-weight="bold">
+                                Семейное древо
+                            </text>
+                        </svg>
+                    </div>
+                    
+                    <!-- Плавающие карточки статистики -->
+                    <div class="stats-float-card shadow-lg" style="position: absolute; top: 10px; right: 20px; background: white; border-radius: 16px; padding: 12px 18px;">
+                        <div class="d-flex align-items-center">
+                            <div class="mr-2" style="width: 40px; height: 40px; background: #e8f5e9; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-users text-success"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 font-weight-bold text-success">1000+</h5>
+                                <small class="text-muted">Семей создано</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-float-card shadow-lg" style="position: absolute; bottom: 30px; left: 10px; background: white; border-radius: 16px; padding: 12px 18px;">
+                        <div class="d-flex align-items-center">
+                            <div class="mr-2" style="width: 40px; height: 40px; background: #fff3e0; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-tree text-warning"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 font-weight-bold text-warning">100 000+</h5>
+                                <small class="text-muted">Родственников добавлено</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section class="features-section py-5" style="background: white;">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="font-weight-bold mb-3" style="color: #2d5a27;">
+                Что вы можете делать?
+            </h2>
+            <p class="text-muted" style="font-size: 1.1rem;">
+                Наш сервис предоставляет все необходимое для создания семейной истории
+            </p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3 mx-auto" style="width: 70px; height: 70px; background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-sitemap fa-2x" style="color: #2f8243;"></i>
+                        </div>
+                        <h5 class="font-weight-bold">Визуальное древо</h5>
+                        <p class="text-muted small">Стройте красивые интерактивные генеалогические деревья с удобной навигацией</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3 mx-auto" style="width: 70px; height: 70px; background: linear-gradient(135deg, #fff3e0, #ffe0b2); border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user-plus fa-2x" style="color: #e67e22;"></i>
+                        </div>
+                        <h5 class="font-weight-bold">Добавление родственников</h5>
+                        <p class="text-muted small">Добавляйте людей с детальной информацией: даты рождения, места проживания, биографии</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3 mx-auto" style="width: 70px; height: 70px; background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-share-alt fa-2x" style="color: #2980b9;"></i>
+                        </div>
+                        <h5 class="font-weight-bold">Совместная работа</h5>
+                        <p class="text-muted small">Приглашайте родственников для совместного наполнения семейного древа</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3 mx-auto" style="width: 70px; height: 70px; background: linear-gradient(135deg, #fce4ec, #f8bbd0); border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-history fa-2x" style="color: #c0392b;"></i>
+                        </div>
+                        <h5 class="font-weight-bold">История изменений</h5>
+                        <p class="text-muted small">Отслеживайте кто и когда вносил изменения, сохраняйте историю правок</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3 mx-auto" style="width: 70px; height: 70px; background: linear-gradient(135deg, #f3e5f5, #e1bee7); border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-search fa-2x" style="color: #8e44ad;"></i>
+                        </div>
+                        <h5 class="font-weight-bold">Умный поиск</h5>
+                        <p class="text-muted small">Ищите семьи, людей и пользователей по различным критериям</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3 mx-auto" style="width: 70px; height: 70px; background: linear-gradient(135deg, #e0f2f1, #b2dfdb); border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-moon fa-2x" style="color: #00695c;"></i>
+                        </div>
+                        <h5 class="font-weight-bold">Темная тема</h5>
+                        <p class="text-muted small">Комфортная работа в любое время суток с поддержкой темной темы оформления</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TOP FAMILIES SECTION -->
+{% if top_families %}
+<section class="top-families-section py-5" style="background: #f8faf8;">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="font-weight-bold mb-3" style="color: #2d5a27;">
+                <i class="fas fa-trophy mr-2" style="color: #f39c12;"></i>
+                Крупнейшие семьи
+            </h2>
+            <p class="text-muted" style="font-size: 1.1rem;">
+                Посмотрите на самые большие и активные семейные проекты
+            </p>
+        </div>
+        
+        <div class="row">
+            {% for family_data in top_families %}
+            <div class="col-md-4 mb-4">
+                <a href="{{ url_for('families.family_page', family_id=family_data.family.id) if family_data.family.status else '#' }}" 
+                   class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px; overflow: hidden;">
+                        <!-- Мини-дерево в шапке карточки -->
+                        <div class="card-header border-0 p-0" style="background: linear-gradient(135deg, #2f8243, #4eac60); height: 80px; position: relative;">
+                            <svg viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%; opacity: 0.3;">
+                                <g stroke="white" stroke-width="2" fill="none">
+                                    <line x1="150" y1="70" x2="150" y2="30"/>
+                                    <line x1="150" y1="40" x2="100" y2="10"/>
+                                    <line x1="150" y1="40" x2="200" y2="10"/>
+                                </g>
+                                <g fill="white">
+                                    <circle cx="150" cy="70" r="6" opacity="0.8"/>
+                                    <circle cx="100" cy="10" r="4" opacity="0.6"/>
+                                    <circle cx="200" cy="10" r="4" opacity="0.6"/>
+                                </g>
+                            </svg>
+                            
+                            {% if loop.index == 1 %}
+                                <span class="badge" style="position: absolute; top: 10px; right: 10px; background: #f39c12; color: white; font-size: 0.8rem;">
+                                    <i class="fas fa-crown mr-1"></i> #1
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-body text-center">
+                            <h5 class="font-weight-bold mb-2" style="color: #2d5a27;">
+                                {{ family_data.family.family_name }}
+                            </h5>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-user mr-1"></i> Создатель: {{ family_data.creator_name }}
+                            </p>
+                            <p class="text-muted small mb-0">
+                                <i class="fas fa-users mr-1"></i> {{ family_data.persons_count }} чел. • 
+                                <i class="fas fa-history mr-1"></i> {{ family_data.edits_count }} правок
+                            </p>
+                            {% if not family_data.family.status %}
+                                <span class="badge badge-secondary mt-2">
+                                    <i class="fas fa-lock mr-1"></i> Приватная
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <p class="text-muted small">
+                <i class="fas fa-info-circle mr-1"></i>
+                Рейтинг основан на количестве добавленных родственников и активности редактирования
+            </p>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA SECTION -->
+{% if not current_user.is_authenticated %}
+<section class="cta-section py-5">
+    <div class="container">
+        <div class="card border-0 shadow-lg" style="border-radius: 30px; background: linear-gradient(135deg, #1a4a2a, #2f8243); overflow: hidden;">
+            <div class="card-body text-center p-5">
+                <h2 class="font-weight-bold text-white mb-3" style="font-size: 2rem;">
+                    Начните строить историю своей семьи прямо сейчас!
+                </h2>
+                <p class="text-white mb-4" style="opacity: 0.9; font-size: 1.1rem;">
+                    Присоединяйтесь к сообществу, создавайте семейные древа и сохраняйте память о ваших близких
+                </p>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg rounded-pill px-5 py-3 shadow" 
+                   style="font-size: 1.1rem; color: #2f8243; font-weight: 600;">
+                    <i class="fas fa-user-plus mr-2"></i> Зарегистрироваться бесплатно
+                </a>
+                <p class="text-white-50 small mt-3 mb-0">
+                    <i class="fas fa-shield-alt mr-1"></i> Бесплатно и без ограничений
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<style>
+    .hero-section {
+        padding: 3rem 0;
+    }
+    
+    .hover-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .hover-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .feature-icon {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-card:hover .feature-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    .stats-float-card {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    /* Адаптивность для мобильных */
+    @media (max-width: 768px) {
+        .hero-section h1 {
+            font-size: 2rem;
+        }
+        .hero-illustration {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        .stats-float-card {
+            position: relative !important;
+            top: auto !important;
+            right: auto !important;
+            bottom: auto !important;
+            left: auto !important;
+            margin: 10px auto;
+            max-width: 200px;
+        }
+    }
+    
+    /* Темная тема */
+    body.dark-theme .features-section {
+        background: #1a1f1b !important;
+    }
+    
+    body.dark-theme .features-section h2,
+    body.dark-theme .top-families-section h2 {
+        color: #d1e8d5 !important;
+    }
+    
+    body.dark-theme .top-families-section {
+        background: #141916 !important;
+    }
+    
+    body.dark-theme .hover-card {
+        background-color: #1e2a22;
+        border: 1px solid #2a3a2e;
+    }
+    
+    body.dark-theme .hover-card:hover {
+        background-color: #243028;
+    }
+    
+    body.dark-theme .feature-icon {
+        filter: brightness(0.8);
+    }
+</style>
+{% endblock %}

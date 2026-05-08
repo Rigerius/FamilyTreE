@@ -11,6 +11,7 @@ from datetime import datetime, date
 import uuid
 from functions import init_family_data
 from utils.family_tree import *
+from sqlalchemy import func, desc
 
 families_bp = Blueprint('families', __name__, url_prefix='/families')
 
@@ -99,7 +100,6 @@ def create_family():
         return redirect(url_for('families.family_page', family_id=new_family.id))
 
     return render_template('create_family.html', form=form)
-
 
 
 @families_bp.route('/<int:family_id>')
@@ -200,5 +200,46 @@ def family_tree_view(family_id):
                                tree_data=json.dumps(tree_data, ensure_ascii=False),
                                chartjs_data=chartjs_data,
                                text_tree=text_tree)
+    finally:
+        db_sess.close()
+
+
+@families_bp.route('/top')
+def top_families():
+    """Страница с топом семей (или API для главной)"""
+    db_sess = db_session.create_session()
+    try:
+        # Получаем все семьи и сортируем по количеству родственников
+        families = db_sess.query(Family).all()
+
+        family_stats = []
+        for family in families:
+            family_data = init_family_data(family)
+            persons = family_data.get("persons", {})
+
+            edits_count = db_sess.query(History).filter(
+                History.family_id == family.id
+            ).count()
+
+            family_stats.append({
+                'family': family,
+                'persons_count': len(persons),
+                'edits_count': edits_count
+            })
+
+        # Сортируем по количеству человек (по убыванию)
+        family_stats.sort(key=lambda x: x['persons_count'], reverse=True)
+
+        # Берем топ-5
+        top_5 = family_stats[:5]
+
+        # Получаем имена создателей
+        all_users = db_sess.query(User).all()
+        user_names_by_id = {str(user.id): user.name for user in all_users}
+
+        for stat in top_5:
+            stat['creator_name'] = user_names_by_id.get(stat['family'].creator, 'Неизвестный')
+
+        return top_5
     finally:
         db_sess.close()
