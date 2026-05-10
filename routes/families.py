@@ -204,11 +204,9 @@ def family_history(family_id):
 @families_bp.route('/<int:family_id>/tree')
 @login_required
 def family_tree_view(family_id):
-    """Страница визуализации семейного дерева"""
     db_sess = db_session.create_session()
     try:
         family = db_sess.query(Family).filter(Family.id == family_id).first()
-
         if not family:
             flash('Семья не найдена', 'danger')
             return redirect(url_for('my_families'))
@@ -221,17 +219,17 @@ def family_tree_view(family_id):
         family_data = init_family_data(family)
         persons = family_data.get("persons", {})
 
-       generator = FamilyTreeGenerator(persons, family.family_name)
+        generator = FamilyTreeGenerator(persons, family.family_name)
+        tree_data_vis = generator.to_visjs()   # узлы уже могут содержать x,y
 
-tree_data_vis = generator.to_visjs()
+        # Текстовое дерево и статистика
+        chartjs_data = TreeVisualizationHelper.format_for_chartjs(generator.tree_data)
+        text_tree = TreeVisualizationHelper.generate_family_text(generator)
 
-chartjs_data = TreeVisualizationHelper.format_for_chartjs(generator.tree_data)
-text_tree = TreeVisualizationHelper.generate_family_text(generator)
-
-return render_template('family_tree.html',
-                       family=family,
-                       tree_data=tree_data_vis,
-                       chartjs_data=chartjs_data,
-                       text_tree=text_tree)
+        return render_template('family_tree.html',
+                               family=family,
+                               tree_data=tree_data_vis,
+                               chartjs_data=chartjs_data,
+                               text_tree=text_tree)
     finally:
         db_sess.close()
