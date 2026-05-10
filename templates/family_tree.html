@@ -35,7 +35,7 @@
             </ul>
 
             <div class="tab-content mt-4">
-                <!-- Вкладка с деревом (vis‑network) -->
+                <!-- Вкладка с деревом -->
                 <div class="tab-pane fade show active" id="graph" role="tabpanel">
                     <div class="d-flex align-items-center mb-3">
                         <input type="text" id="searchBox" class="form-control form-control-sm" placeholder="🔍 Поиск по имени..." style="max-width: 250px;" oninput="searchPerson()">
@@ -97,58 +97,180 @@
     </div>
 </div>
 
-<!-- vis‑network -->
 <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
-<!-- Chart.js для статистики -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
     const treeData = {{ tree_data | tojson | safe }};
+    const saveUrl = "{{ url_for('families.save_tree_positions', family_id=family.id) }}";
 
-    const nodes = new vis.DataSet(treeData.nodes.map(n => ({
-        id: n.id,
-        label: n.name + '\n' + n.lifespan,
-        group: n.gender,
-        level: n.generation,
-        title: ''
-    })));
-    const edges = new vis.DataSet(treeData.edges.map(e => ({
-        from: e.source,
-        to: e.target,
-        arrows: e.type === 'child' ? 'to' : '',
-        dashes: e.type === 'spouse',
-        color: e.type === 'spouse' ? { color: '#e74c3c' } : { color: '#555' },
-        smooth: { type: 'curvedCW', roundness: 0.1 }
-    })));
+    // Функция создания сети с заданными опциями
+    function createNetwork(nodesData, edgesData, useHierarchical) {
+        const nodes = new vis.DataSet(nodesData);
+        const edges = new vis.DataSet(edgesData);
+        const data = { nodes, edges };
 
-    const container = document.getElementById('treeContainer');
-    const data = { nodes, edges };
-    const options = {
-        layout: {
-            hierarchical: {
-                direction: 'UD',
-                sortMethod: 'directed',
-                nodeSpacing: 150,
-                levelSeparation: 130,
-                parentCentralization: true
+        const options = {
+            edges: { smooth: { type: 'curvedCW', roundness: 0.1 } },
+            nodes: {
+                shape: 'box',
+                margin: 10,
+                widthConstraint: { minimum: 130 },
+                font: { size: 13, face: 'Segoe UI' }
+            },
+            groups: {
+                male: { color: { background: '#d4f0d9', border: '#4eac60', highlight: { border: '#2d6a4f', background: '#b7e4c7' } } },
+                female: { color: { background: '#fff3cd', border: '#f1c40f', highlight: { border: '#d4ac0d', background: '#fceabb' } } }
+            },
+            physics: false,
+            interaction: { hover: true }
+        };
+
+        if (useHierarchical) {
+            options.layout = {
+                hierarchical: {
+                    direction: 'UD',
+                    sortMethod: 'directed',
+                    nodeSpacing: 150,
+                    levelSeparation: 130,
+                    parentCentralization: true
+                }
+            };
+        }
+
+        const container = document.getElementById('treeContainer');
+        return new vis.Network(container, data, options);
+    }
+
+    // Преобразуем узлы в формат vis‑network
+    function prepareNodes(withCoords) {
+        return treeData.nodes.map(n => {
+            const node = {
+                id: n.id,
+                label: n.name + '\n' + n.lifespan,
+                group: n.gender,
+                title: ''
+            };
+            if (withCoords && n.x !== undefined && n.y !== undefined) {
+                node.x = n.x;
+                node.y = n.y;
+                node.fixed = true;
             }
-        },
-        edges: { smooth: { type: 'curvedCW', roundness: 0.1 } },
-        nodes: {
-            shape: 'box',
-            margin: 10,
-            widthConstraint: { minimum: 130 },
-            font: { size: 13, face: 'Segoe UI' }
-        },
-        groups: {
-            male: { color: { background: '#d4f0d9', border: '#4eac60', highlight: { border: '#2d6a4f', background: '#b7e4c7' } } },
-            female: { color: { background: '#fff3cd', border: '#f1c40f', highlight: { border: '#d4ac0d', background: '#fceabb' } } }
-        },
-        physics: false,
-        interaction: { hover: true }
-    };
-    const network = new vis.Network(container, data, options);
+            return node;
+        });
+    }
 
+    // Определяем, есть ли хотя бы один узел с сохранёнными координатами
+    const hasAnyCoordinates = treeData.nodes.some(n => n.x !== undefined && n.y !== undefined);
+
+    let network;
+
+    // Сохранение позиций одного узла
+    function saveNodePosition(nodeId, x, y) {
+        fetch(saveUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ positions: { [nodeId]: { x: x, y: y } } })
+        }).catch(err => console.error('Ошибка сохранения позиции', err));
+    }
+
+    // Сохранение всех позиций (используется при первой инициализации)
+    function saveAllPositions() {
+        const positions = {};
+        const positionsArray = network.getPositions();
+        for (const [id, pos] of Object.entries(positionsArray)) {
+            positions[id] = { x: pos.x, y: pos.y };
+        }
+        fetch(saveUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ positions: positions })
+        }).catch(err => console.error(err));
+    }
+
+    if (hasAnyCoordinates) {
+        // Уже есть координаты – используем их, без иерархической раскладки
+        const nodesData = prepareNodes(true);
+        const edgesData = treeData.edges.map(e => ({
+            from: e.source,
+            to: e.target,
+            arrows: e.type === 'child' ? 'to' : '',
+            dashes: e.type === 'spouse',
+            color: e.type === 'spouse' ? { color: '#e74c3c' } : { color: '#555' },
+            smooth: { type: 'curvedCW', roundness: 0.1 }
+        }));
+        network = createNetwork(nodesData, edgesData, false);
+
+        // При перетаскивании сохраняем координаты
+        network.on('dragEnd', function(params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                const pos = network.getPositions([nodeId])[nodeId];
+                saveNodePosition(nodeId, pos.x, pos.y);
+            }
+        });
+    } else {
+        // Первый заход – включаем иерархический layout, дожидаемся стабилизации, сохраняем все позиции
+        const nodesData = prepareNodes(false);
+        const edgesData = treeData.edges.map(e => ({
+            from: e.source,
+            to: e.target,
+            arrows: e.type === 'child' ? 'to' : '',
+            dashes: e.type === 'spouse',
+            color: e.type === 'spouse' ? { color: '#e74c3c' } : { color: '#555' },
+            smooth: { type: 'curvedCW', roundness: 0.1 }
+        }));
+        network = createNetwork(nodesData, edgesData, true);
+
+        // Ждём стабилизации и сохраняем координаты
+        network.once('stabilized', function() {
+            saveAllPositions();
+            // После сохранения координат можем предложить пользователю обновить страницу,
+            // чтобы переключиться в режим без иерархии, НО лучше динамически пересоздать сеть.
+            // Пересоздадим сеть без иерархии, с полученными координатами.
+            const positions = network.getPositions();
+            const updatedNodes = prepareNodes(true).map(n => {
+                if (positions[n.id]) {
+                    n.x = positions[n.id].x;
+                    n.y = positions[n.id].y;
+                    n.fixed = true;
+                }
+                return n;
+            });
+
+            // Уничтожаем старую сеть и создаём новую
+            network.destroy();
+            network = createNetwork(updatedNodes, edgesData, false);
+
+            // Теперь dragEnd будет сохранять индивидуальные позиции
+            network.on('dragEnd', function(params) {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    const pos = network.getPositions([nodeId])[nodeId];
+                    saveNodePosition(nodeId, pos.x, pos.y);
+                }
+            });
+
+            // Инициализируем остальные обработчики заново (клик, поиск)
+            bindEvents();
+        });
+    }
+
+    // Обработчики событий (клик для боковой панели, поиск)
+    function bindEvents() {
+        network.on('click', function(params) {
+            if (params.nodes.length > 0) {
+                openSidebar(params.nodes[0]);
+            } else {
+                closeSidebar();
+            }
+        });
+    }
+
+    // Вызываем сразу, если сеть уже создана (для ветки без иерархии)
+    if (network) bindEvents();
+
+    // --- Боковая панель ---
     function openSidebar(personId) {
         const person = treeData.nodes.find(n => n.id === personId);
         if (!person) return;
@@ -175,14 +297,7 @@
         document.getElementById('sidebar').style.width = '0';
     }
 
-    network.on('click', function(params) {
-        if (params.nodes.length > 0) {
-            openSidebar(params.nodes[0]);
-        } else {
-            closeSidebar();
-        }
-    });
-
+    // Поиск
     function searchPerson() {
         const q = document.getElementById('searchBox').value.trim().toLowerCase();
         if (!q) { network.unselectAll(); return; }
@@ -197,11 +312,10 @@
         }
     }
 
-    // Статистика (график поколений)
+    // Статистика
     const generationsData = {{ chartjs_data.generations | tojson | safe }};
     const generations = Object.keys(generationsData);
     const counts = generations.map(gen => generationsData[gen].length);
-
     new Chart(document.getElementById('generations-chart').getContext('2d'), {
         type: 'bar',
         data: {
