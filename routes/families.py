@@ -11,9 +11,43 @@ from datetime import datetime, date
 import uuid
 from functions import init_family_data
 from utils.family_tree import *
+from flask import request
 
 families_bp = Blueprint('families', __name__, url_prefix='/families')
 
+@families_bp.route('/<int:family_id>/tree/save_positions', methods=['POST'])
+@login_required
+def save_tree_positions(family_id):
+    """Сохраняет координаты узлов, присланные из vis‑network"""
+    db_sess = db_session.create_session()
+    try:
+        family = db_sess.query(Family).filter(Family.id == family_id).first()
+        if not family:
+            return jsonify({"status": "error", "message": "Семья не найдена"}), 404
+
+        members = json.loads(family.members) if family.members else []
+        if str(current_user.id) not in members:
+            return jsonify({"status": "error", "message": "Нет доступа"}), 403
+
+        data = request.get_json()
+        positions = data.get("positions")  # {"person_id": {"x":..., "y":...}, ...}
+
+        family_data = json.loads(family.data)
+        persons = family_data.setdefault("persons", {})
+
+        for pid, pos in positions.items():
+            if pid in persons:
+                persons[pid]["position"] = {"x": pos["x"], "y": pos["y"]}
+
+        family_data["metadata"]["updated_at"] = datetime.now().isoformat()
+        family.data = json.dumps(family_data, ensure_ascii=False)
+        db_sess.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        db_sess.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        db_sess.close()
 
 @families_bp.route('/')
 @login_required
