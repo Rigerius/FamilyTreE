@@ -1,9 +1,12 @@
+# utils/family_tree.py
 import json
 from typing import Dict, List, Optional, Any
 from collections import defaultdict, deque
+from datetime import datetime
 
 
 class FamilyTreeGenerator:
+    """Генератор структуры данных для семейного дерева (исправленная версия)"""
 
     def __init__(self, persons: Dict[str, Dict], family_name: str = ""):
         self.persons = persons
@@ -12,13 +15,11 @@ class FamilyTreeGenerator:
 
     @property
     def tree_data(self):
-        """Ленивая генерация и кэширование"""
         if self._tree_data is None:
             self._tree_data = self._build_tree()
         return self._tree_data
 
     def _build_tree(self) -> Dict:
-        from datetime import datetime
         generations = self._calculate_generations()
         nodes = []
         for pid, p in self.persons.items():
@@ -27,6 +28,7 @@ class FamilyTreeGenerator:
 
         links = []
         processed = set()
+        # parent → child
         for pid, p in self.persons.items():
             for child_id in p.get("children", []):
                 if child_id in self.persons:
@@ -37,6 +39,7 @@ class FamilyTreeGenerator:
                             "type": "child", "title": "Ребёнок"
                         })
                         processed.add(link_key)
+            # spouse
             for spouse_id in p.get("spouses", []):
                 if spouse_id in self.persons:
                     link_key = tuple(sorted([pid, spouse_id]))
@@ -59,6 +62,7 @@ class FamilyTreeGenerator:
 
     def _calculate_generations(self) -> Dict[str, int]:
         gens = {}
+        # корни: нет родителей или все родители вне данных
         roots = [pid for pid, p in self.persons.items()
                  if not p.get("parents") or all(par not in self.persons for par in p["parents"])]
         q = deque(roots)
@@ -75,6 +79,7 @@ class FamilyTreeGenerator:
             if pid not in gens:
                 gens[pid] = 0
 
+        # выравниваем супругов
         changed = True
         while changed:
             changed = False
@@ -86,6 +91,7 @@ class FamilyTreeGenerator:
                             gens[pid] = max_gen
                             gens[sp_id] = max_gen
                             changed = True
+        # дети строго ниже родителей
         for pid, p in self.persons.items():
             for child_id in p.get("children", []):
                 if child_id in gens and gens[child_id] <= gens[pid]:
@@ -106,7 +112,7 @@ class FamilyTreeGenerator:
                 lifespan += " — н.в."
         else:
             lifespan = "дата неизв."
-        return {
+        node = {
             "id": person_id,
             "name": person.get("full_name", "Неизвестно"),
             "gender": person.get("gender", "male"),
@@ -127,9 +133,14 @@ class FamilyTreeGenerator:
             "spouses": person.get("spouses", []),
             "children": person.get("children", []),
         }
+        # Добавляем координаты, если есть
+        pos = person.get("position")
+        if pos and "x" in pos and "y" in pos:
+            node["x"] = pos["x"]
+            node["y"] = pos["y"]
+        return node
 
     def to_visjs(self):
-        """Возвращает данные в формате, готовом для vis‑network"""
         tree = self.tree_data
         return {
             "nodes": tree["nodes"],
@@ -143,6 +154,7 @@ class FamilyTreeGenerator:
                 f.write(json_str)
         return json_str
 
+    # Старые методы оставлены для совместимости
     def get_roots(self) -> List[Dict]:
         roots = []
         for pid, p in self.persons.items():
