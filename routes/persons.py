@@ -24,8 +24,11 @@ def add_person(family_id):
             flash('Семья не найдена', 'danger')
             return redirect(url_for('families.my_families'))
 
-        members = json.loads(family.members) if family.members else []
-        if not (family.is_creator(current_user.id) or family.is_editor(current_user.id)):
+        # ИСПРАВЛЕНО: упрощенная проверка прав
+        current_user_id_str = str(current_user.id)
+        editors = json.loads(family.editors) if family.editors else []
+
+        if current_user_id_str != family.creator and current_user_id_str not in editors:
             flash('У вас нет прав для добавления родственников', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
@@ -121,7 +124,8 @@ def add_person(family_id):
                 relations=added_relations if added_relations else None)
 
             if added_relations:
-                flash(f'Родственник "{form.full_name.data}" успешно добавлен! Связи: {", ".join(added_relations)}', 'success')
+                flash(f'Родственник "{form.full_name.data}" успешно добавлен! Связи: {", ".join(added_relations)}',
+                      'success')
             else:
                 if not persons:
                     flash(f'Родственник "{form.full_name.data}" успешно добавлен как основатель семьи!', 'success')
@@ -147,8 +151,11 @@ def edit_person(family_id, person_id):
             flash('Семья не найдена', 'danger')
             return redirect(url_for('families.my_families'))
 
-        members = json.loads(family.members) if family.members else []
-        if not (family.is_creator(current_user.id) or family.is_editor(current_user.id)):
+        # ИСПРАВЛЕНО: упрощенная проверка прав
+        current_user_id_str = str(current_user.id)
+        editors = json.loads(family.editors) if family.editors else []
+
+        if current_user_id_str != family.creator and current_user_id_str not in editors:
             flash('У вас нет прав для редактирования родственников', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
@@ -301,8 +308,8 @@ def delete_person(family_id, person_id):
             flash('Семья не найдена', 'danger')
             return redirect(url_for('families.my_families'))
 
-        members = json.loads(family.members) if family.members else []
-        if not family.is_creator(current_user.id):
+        # Только создатель может удалять
+        if str(current_user.id) != family.creator:
             flash('Только создатель семьи может удалять родственников', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
@@ -393,7 +400,7 @@ def person_detail(family_id, person_id):
         editors = json.loads(family.editors) if family.editors else []
         is_editor = current_user_id_str in editors if current_user_id_str else False
         is_creator = family.creator == current_user_id_str if current_user_id_str else False
-        user_can_edit = is_creator or is_editor or is_member
+        user_can_edit = is_creator or is_editor
 
         return render_template('person_detail.html',
                                family=family,
