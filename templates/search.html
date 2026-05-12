@@ -2,158 +2,215 @@
 
 {% block content %}
 <div class="container mt-4">
-    <!-- Форма поиска -->
-    <div class="card shadow-sm rounded-4 mb-4">
+    <div class="card shadow-sm rounded-4">
         <div class="card-header bg-success text-white rounded-top-4">
-            <h5 class="mb-0">
-                <i class="fas fa-search"></i> Поиск по сайту
-            </h5>
+            <h4 class="mb-0">
+                <i class="fas fa-search"></i> Поиск
+            </h4>
         </div>
         <div class="card-body">
-            <form method="GET" action="{{ url_for('search.search') }}" class="row g-3">
-                <div class="col-md-3">
-                    <select name="type" class="form-control">
-                        <option value="users" {% if search_type == 'users' %}selected{% endif %}>
-                            👤 Пользователи
-                        </option>
-                        <option value="families" {% if search_type == 'families' %}selected{% endif %} disabled>
-                            👨‍👩‍👧‍👦 Семьи (скоро)
-                        </option>
-                        <option value="persons" {% if search_type == 'persons' %}selected{% endif %} disabled>
-                            🧑 Родственники (скоро)
-                        </option>
-                    </select>
-                </div>
-                <div class="col-md-7">
-                    <div class="input-group">
-                        <input type="text" name="q" class="form-control"
-                               placeholder="Поиск пользователей по имени или email..."
-                               value="{{ query }}">
-                        <button class="btn btn-success" type="submit">
-                            <i class="fas fa-search"></i> Найти
-                        </button>
+            <!-- Форма поиска (без выпадающего списка) -->
+            <form method="GET" action="{{ url_for('search.search') }}" class="mb-4">
+                <div class="row">
+                    <div class="col-md-8 mx-auto">
+                        <div class="input-group">
+                            <input type="text" name="q" class="form-control form-control-lg"
+                                   placeholder="🔍 Искать пользователей, семьи или родственников..."
+                                   value="{{ query }}" autofocus>
+                            <div class="input-group-append">
+                                <button class="btn btn-success" type="submit">
+                                    <i class="fas fa-search"></i> Найти
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </form>
-        </div>
-    </div>
 
-    <!-- Результаты поиска -->
-    {% if query %}
-    <div class="card shadow-sm rounded-4">
-        <div class="card-header bg-info text-white rounded-top-4">
-            <h5 class="mb-0">
-                <i class="fas fa-list"></i> Результаты поиска по запросу "{{ query }}"
-                <span class="badge bg-light text-dark ms-2">{{ result_count }} найдено</span>
-            </h5>
-        </div>
-        <div class="card-body">
-            {% if results %}
-                <div class="row">
-                    {% for result in results %}
-                        <div class="col-md-6 col-lg-4 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-3">
-                                        {% if result.type == 'user' %}
-                                            {% if result.avatar %}
-                                                <img src="{{ result.avatar }}" class="rounded-circle me-3"
-                                                     style="width: 50px; height: 50px; object-fit: cover;">
-                                            {% else %}
-                                                <div class="rounded-circle bg-success d-flex align-items-center justify-content-center me-3"
-                                                     style="width: 50px; height: 50px;">
-                                                    <i class="fas fa-user fa-2x text-white"></i>
+            {% if query %}
+                <hr>
+
+                <!-- Результаты поиска -->
+                <h5 class="mb-3">
+                    Результаты поиска по запросу "{{ query }}"
+                    <small class="text-muted">(найдено: {{ total_count }})</small>
+                </h5>
+
+                <!-- Вкладки для разных типов результатов -->
+                <ul class="nav nav-tabs mb-3" id="searchTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="users-tab" data-toggle="tab" href="#users" role="tab">
+                            <i class="fas fa-users"></i> Пользователи ({{ user_count }})
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="families-tab" data-toggle="tab" href="#families" role="tab">
+                            <i class="fas fa-tree"></i> Семьи ({{ family_count }})
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="persons-tab" data-toggle="tab" href="#persons" role="tab">
+                            <i class="fas fa-user-friends"></i> Родственники ({{ person_count }})
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- Пользователи -->
+                    <div class="tab-pane fade show active" id="users" role="tabpanel">
+                        {% if results.users %}
+                            <div class="row">
+                            {% for user in results.users %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="mr-3">
+                                                    {% if user.avatar %}
+                                                        <img src="{{ user.avatar }}" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="rounded-circle bg-success d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                            <i class="fas fa-user fa-2x text-white"></i>
+                                                        </div>
+                                                    {% endif %}
                                                 </div>
-                                            {% endif %}
-                                            <div>
-                                                <h6 class="mb-0">{{ result.name }}</h6>
-                                                <small class="text-muted">{{ result.email }}</small>
+                                                <div>
+                                                    <h6 class="mb-0">{{ user.name }}</h6>
+                                                    <small class="text-muted">{{ user.email }}</small>
+                                                    <div class="mt-1">
+                                                        <span class="badge badge-success">Семей: {{ user.families_count }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="ml-auto">
+                                                    <a href="{{ url_for('auth.view_profile', user_id=user.id) }}" class="btn btn-sm btn-outline-success">
+                                                        Перейти
+                                                    </a>
+                                                </div>
                                             </div>
-                                        {% elif result.type == 'family' %}
-                                            <div class="rounded-circle bg-info d-flex align-items-center justify-content-center me-3"
-                                                 style="width: 50px; height: 50px;">
-                                                <i class="fas fa-tree fa-2x text-white"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0">{{ result.name }}</h6>
-                                                <small class="text-muted">Создатель ID: {{ result.creator_id }}</small>
-                                            </div>
-                                        {% elif result.type == 'person' %}
-                                            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-3"
-                                                 style="width: 50px; height: 50px;">
-                                                <i class="fas fa-user-friends fa-2x text-white"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0">{{ result.name }}</h6>
-                                                <small class="text-muted">Семья: {{ result.family_name }}</small>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="mb-3">
-                                        {% if result.type == 'user' %}
-                                            <small class="text-muted">
-                                                <i class="fas fa-calendar-alt"></i>
-                                                На сайте с {{ result.created_date.strftime('%d.%m.%Y') if result.created_date else 'неизвестно' }}
-                                            </small>
-                                            <br>
-                                            <small class="text-muted">
-                                                <i class="fas fa-tree"></i>
-                                                Публичных семей: {{ result.families_count }}
-                                            </small>
-                                        {% elif result.type == 'family' %}
-                                            <small class="text-muted">
-                                                <i class="fas fa-users"></i>
-                                                Участников: {{ result.members_count }}
-                                            </small>
-                                            <br>
-                                            <small class="text-muted">
-                                                <i class="fas fa-calendar-alt"></i>
-                                                Создана: {{ result.created_date.strftime('%d.%m.%Y') if result.created_date else 'неизвестно' }}
-                                            </small>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="d-grid">
-                                        {% if result.type == 'user' %}
-                                            <a href="{{ url_for('auth.view_profile', user_id=result.id) }}"
-                                               class="btn btn-outline-success">
-                                                <i class="fas fa-user"></i> Перейти к профилю
-                                            </a>
-                                        {% elif result.type == 'family' %}
-                                            <a href="{{ url_for('families.family_page', family_id=result.id) }}"
-                                               class="btn btn-outline-success">
-                                                <i class="fas fa-tree"></i> Перейти к семье
-                                            </a>
-                                        {% elif result.type == 'person' %}
-                                            <a href="{{ url_for('families.family_page', family_id=result.family_id) }}"
-                                               class="btn btn-outline-success">
-                                                <i class="fas fa-user-friends"></i> Перейти к семье
-                                            </a>
-                                        {% endif %}
+                                        </div>
                                     </div>
                                 </div>
+                            {% endfor %}
                             </div>
-                        </div>
-                    {% endfor %}
+                        {% else %}
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle"></i> Пользователи не найдены
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Семьи -->
+                    <div class="tab-pane fade" id="families" role="tabpanel">
+                        {% if results.families %}
+                            <div class="row">
+                            {% for family in results.families %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-tree text-success"></i> {{ family.name }}
+                                            </h6>
+                                            <p class="card-text small text-muted">
+                                                Создатель: {{ family.creator_name }}<br>
+                                                Участников: {{ family.members_count }} | Родственников: {{ family.persons_count }}<br>
+                                                Дата создания: {{ family.created_date.strftime('%d.%m.%Y') if family.created_date else 'Неизвестно' }}
+                                            </p>
+                                            <a href="{{ url_for('search.view_family_from_search', family_id=family.id) }}" class="btn btn-sm btn-outline-success">
+                                                Перейти к семье
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle"></i> Семьи не найдены
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Родственники -->
+                    <div class="tab-pane fade" id="persons" role="tabpanel">
+                        {% if results.persons %}
+                            <div class="row">
+                            {% for person in results.persons %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="mr-3">
+                                                    {% if person.gender == 'male' %}
+                                                        <i class="fas fa-mars fa-3x text-success"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-venus fa-3x text-success"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ person.name }}</h6>
+                                                    <small class="text-muted">
+                                                        {% if person.status == 'living' %}
+                                                            <span class="badge badge-success">Живой</span>
+                                                        {% else %}
+                                                            <span class="badge badge-secondary">Умерший</span>
+                                                        {% endif %}
+                                                        {% if person.birth_date %}
+                                                            <span class="badge badge-info">{{ person.birth_date[:4] }} г.р.</span>
+                                                        {% endif %}
+                                                        {% if person.age %}
+                                                            <span class="badge badge-warning">{{ person.age }} лет</span>
+                                                        {% endif %}
+                                                    </small>
+                                                    <div class="mt-1">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-tree"></i> Семья: {{ person.family_name }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="ml-auto">
+                                                    <a href="{{ url_for('search.view_person_from_search', family_id=person.family_id, person_id=person.id) }}" class="btn btn-sm btn-outline-success">
+                                                        Перейти
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle"></i> Родственники не найдены
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             {% else %}
                 <div class="text-center py-5">
                     <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted">Ничего не найдено</h5>
-                    <p class="text-muted">Попробуйте изменить запрос или поискать в другой категории</p>
+                    <h5 class="text-muted">Начните поиск</h5>
+                    <p class="text-muted">Ищите пользователей, семьи или родственников по имени</p>
                 </div>
             {% endif %}
         </div>
     </div>
-    {% else %}
-        <div class="card shadow-sm rounded-4">
-            <div class="card-body text-center py-5">
-                <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                <h5 class="text-muted">Введите поисковый запрос</h5>
-                <p class="text-muted">Вы можете искать пользователей по имени или email</p>
-            </div>
-        </div>
-    {% endif %}
 </div>
+
+<style>
+    .nav-tabs .nav-link {
+        color: #2e7d3e;
+        font-weight: 500;
+    }
+    .nav-tabs .nav-link.active {
+        color: #1b5e2a;
+        border-bottom: 2px solid #2e7d3e;
+    }
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+</style>
 {% endblock %}

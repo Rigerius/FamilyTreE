@@ -16,12 +16,12 @@
                     </span>
                 </h1>
                 <p class="lead text-muted mb-4" style="font-size: 1.2rem;">
-                    Создавайте генеалогические деревья, добавляйте родственников, 
+                    Создавайте генеалогические деревья, добавляйте родственников,
                     документируйте важные события и делитесь историей с близкими.
                 </p>
                 <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3">
                     {% if not current_user.is_authenticated %}
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg rounded-pill px-5 py-3 shadow-lg" 
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg rounded-pill px-5 py-3 shadow-lg"
                            style="background: linear-gradient(135deg, #2f8243, #4eac60); border: none; font-size: 1.1rem;">
                             <i class="fas fa-user-plus mr-2"></i> Присоединиться бесплатно
                         </a>
@@ -55,7 +55,7 @@
                                 </filter>
                             </defs>
                             <rect width="500" height="400" rx="30" fill="url(#bgGrad)"/>
-                            
+
                             <!-- Ветви дерева -->
                             <g stroke="#5a8a4a" stroke-width="3" fill="none" opacity="0.6">
                                 <path d="M250 320 Q250 250 250 180" stroke-width="5"/>
@@ -66,35 +66,35 @@
                                 <path d="M360 120 Q330 80 320 40" />
                                 <path d="M360 120 Q400 80 420 40" />
                             </g>
-                            
+
                             <!-- Узлы-листья (люди) -->
                             <g filter="url(#shadow)">
                                 <!-- Корень -->
                                 <circle cx="250" cy="340" r="28" fill="#2f8243" stroke="white" stroke-width="3"/>
                                 <text x="250" y="348" text-anchor="middle" fill="white" font-size="20" font-family="Arial">👤</text>
                                 <text x="250" y="388" text-anchor="middle" fill="#2d5a27" font-size="12" font-family="Arial" font-weight="bold">Основатель</text>
-                                
+
                                 <!-- Уровень 2 -->
                                 <circle cx="140" cy="120" r="22" fill="#4eac60" stroke="white" stroke-width="2.5"/>
                                 <text x="140" y="128" text-anchor="middle" fill="white" font-size="15">👤</text>
-                                
+
                                 <circle cx="360" cy="120" r="22" fill="#4eac60" stroke="white" stroke-width="2.5"/>
                                 <text x="360" y="128" text-anchor="middle" fill="white" font-size="15">👤</text>
-                                
+
                                 <!-- Уровень 3 -->
                                 <circle cx="80" cy="35" r="18" fill="#78c48e" stroke="white" stroke-width="2"/>
                                 <text x="80" y="41" text-anchor="middle" fill="white" font-size="12">👤</text>
-                                
+
                                 <circle cx="180" cy="35" r="18" fill="#78c48e" stroke="white" stroke-width="2"/>
                                 <text x="180" y="41" text-anchor="middle" fill="white" font-size="12">👤</text>
-                                
+
                                 <circle cx="320" cy="35" r="18" fill="#78c48e" stroke="white" stroke-width="2"/>
                                 <text x="320" y="41" text-anchor="middle" fill="white" font-size="12">👤</text>
-                                
+
                                 <circle cx="420" cy="35" r="18" fill="#78c48e" stroke="white" stroke-width="2"/>
                                 <text x="420" y="41" text-anchor="middle" fill="white" font-size="12">👤</text>
                             </g>
-                            
+
                             <!-- Декоративные листочки -->
                             <g fill="#4eac60" opacity="0.4">
                                 <ellipse cx="270" cy="260" rx="8" ry="4" transform="rotate(-30 270 260)"/>
@@ -102,14 +102,14 @@
                                 <ellipse cx="160" cy="160" rx="6" ry="3" transform="rotate(-15 160 160)"/>
                                 <ellipse cx="350" cy="160" rx="7" ry="3.5" transform="rotate(25 350 160)"/>
                             </g>
-                            
+
                             <!-- Текст -->
                             <text x="250" y="20" text-anchor="middle" fill="#2f8243" font-size="16" font-family="Arial" font-weight="bold">
                                 Семейное древо
                             </text>
                         </svg>
                     </div>
-                    
+
                     <!-- Плавающие карточки статистики -->
                     <div class="stats-float-card shadow-lg" style="position: absolute; top: 10px; right: 20px; background: white; border-radius: 16px; padding: 12px 18px;">
                         <div class="d-flex align-items-center">
@@ -122,7 +122,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="stats-float-card shadow-lg" style="position: absolute; bottom: 30px; left: 10px; background: white; border-radius: 16px; padding: 12px 18px;">
                         <div class="d-flex align-items-center">
                             <div class="mr-2" style="width: 40px; height: 40px; background: #fff3e0; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
@@ -151,7 +151,7 @@
                 Наш сервис предоставляет все необходимое для создания семейной истории
             </p>
         </div>
-        
+
         <div class="row">
             <div class="col-md-4 mb-4">
                 <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
@@ -164,7 +164,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4 mb-4">
                 <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
                     <div class="card-body text-center p-4">
@@ -176,7 +176,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4 mb-4">
                 <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
                     <div class="card-body text-center p-4">
@@ -189,7 +189,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="row mt-3">
             <div class="col-md-4 mb-4">
                 <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
@@ -202,7 +202,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4 mb-4">
                 <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
                     <div class="card-body text-center p-4">
@@ -214,7 +214,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4 mb-4">
                 <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px;">
                     <div class="card-body text-center p-4">
@@ -243,11 +243,11 @@
                 Посмотрите на самые большие и активные семейные проекты
             </p>
         </div>
-        
+
         <div class="row">
             {% for family_data in top_families %}
             <div class="col-md-4 mb-4">
-                <a href="{{ url_for('families.family_page', family_id=family_data.family.id) if family_data.family.status else '#' }}" 
+                <a href="{{ url_for('families.family_page', family_id=family_data.family.id) if family_data.family.status else '#' }}"
                    class="text-decoration-none">
                     <div class="card h-100 border-0 shadow-sm hover-card" style="border-radius: 20px; overflow: hidden;">
                         <!-- Мини-дерево в шапке карточки -->
@@ -264,14 +264,14 @@
                                     <circle cx="200" cy="10" r="4" opacity="0.6"/>
                                 </g>
                             </svg>
-                            
+
                             {% if loop.index == 1 %}
                                 <span class="badge" style="position: absolute; top: 10px; right: 10px; background: #f39c12; color: white; font-size: 0.8rem;">
                                     <i class="fas fa-crown mr-1"></i> #1
                                 </span>
                             {% endif %}
                         </div>
-                        
+
                         <div class="card-body text-center">
                             <h5 class="font-weight-bold mb-2" style="color: #2d5a27;">
                                 {{ family_data.family.family_name }}
@@ -280,7 +280,7 @@
                                 <i class="fas fa-user mr-1"></i> Создатель: {{ family_data.creator_name }}
                             </p>
                             <p class="text-muted small mb-0">
-                                <i class="fas fa-users mr-1"></i> {{ family_data.persons_count }} чел. • 
+                                <i class="fas fa-users mr-1"></i> {{ family_data.persons_count }} чел. •
                                 <i class="fas fa-history mr-1"></i> {{ family_data.edits_count }} правок
                             </p>
                             {% if not family_data.family.status %}
@@ -294,7 +294,7 @@
             </div>
             {% endfor %}
         </div>
-        
+
         <div class="text-center mt-4">
             <p class="text-muted small">
                 <i class="fas fa-info-circle mr-1"></i>
@@ -317,7 +317,7 @@
                 <p class="text-white mb-4" style="opacity: 0.9; font-size: 1.1rem;">
                     Присоединяйтесь к сообществу, создавайте семейные древа и сохраняйте память о ваших близких
                 </p>
-                <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg rounded-pill px-5 py-3 shadow" 
+                <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg rounded-pill px-5 py-3 shadow"
                    style="font-size: 1.1rem; color: #2f8243; font-weight: 600;">
                     <i class="fas fa-user-plus mr-2"></i> Зарегистрироваться бесплатно
                 </a>
@@ -334,34 +334,34 @@
     .hero-section {
         padding: 3rem 0;
     }
-    
+
     .hover-card {
         transition: all 0.3s ease;
         cursor: pointer;
     }
-    
+
     .hover-card:hover {
         transform: translateY(-8px);
         box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
     }
-    
+
     .feature-icon {
         transition: all 0.3s ease;
     }
-    
+
     .hover-card:hover .feature-icon {
         transform: scale(1.1) rotate(5deg);
     }
-    
+
     .stats-float-card {
         animation: float 3s ease-in-out infinite;
     }
-    
+
     @keyframes float {
         0%, 100% { transform: translateY(0px); }
         50% { transform: translateY(-10px); }
     }
-    
+
     /* Адаптивность для мобильных */
     @media (max-width: 768px) {
         .hero-section h1 {
@@ -381,30 +381,30 @@
             max-width: 200px;
         }
     }
-    
+
     /* Темная тема */
     body.dark-theme .features-section {
         background: #1a1f1b !important;
     }
-    
+
     body.dark-theme .features-section h2,
     body.dark-theme .top-families-section h2 {
         color: #d1e8d5 !important;
     }
-    
+
     body.dark-theme .top-families-section {
         background: #141916 !important;
     }
-    
+
     body.dark-theme .hover-card {
         background-color: #1e2a22;
         border: 1px solid #2a3a2e;
     }
-    
+
     body.dark-theme .hover-card:hover {
         background-color: #243028;
     }
-    
+
     body.dark-theme .feature-icon {
         filter: brightness(0.8);
     }
