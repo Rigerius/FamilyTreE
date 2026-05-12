@@ -140,37 +140,52 @@ def create_family():
 @login_required
 def family_page(family_id):
     db_sess = db_session.create_session()
+    try:
+        family = db_sess.query(Family).filter(Family.id == family_id).first()
+        if not family:
+            flash('Семья не найдена', 'danger')
+            return redirect(url_for('families.my_families'))
 
-    family = db_sess.query(Family).filter(Family.id == family_id).first()
+        members = json.loads(family.members) if family.members else []
+        if str(current_user.id) not in members:
+            flash('У вас нет доступа к этой семье', 'danger')
+            return redirect(url_for('families.my_families'))
 
-    if not family:
-        flash('Семья не найдена', 'danger')
-        return redirect(url_for('my_families'))
+        family_data = init_family_data(family)
+        persons = family_data.get("persons", {})
 
-    members = json.loads(family.members) if family.members else []
-    if str(current_user.id) not in members:
-        flash('У вас нет доступа к этой семье', 'danger')
-        return redirect(url_for('my_families'))
+        # Получаем имена пользователей
+        all_users = db_sess.query(User).all()
+        user_names_by_id = {str(user.id): user.name for user in all_users}
+        creator_name = user_names_by_id.get(family.creator, family.creator)
+        members_names = [user_names_by_id.get(m_id, m_id) for m_id in members]
+        editors = json.loads(family.editors) if family.editors else []
+        editors_names = [user_names_by_id.get(e_id, e_id) for e_id in editors]
 
-    family_data = init_family_data(family)
-    persons = family_data.get("persons", {})
+        # Дополнительная информация из family.data
+        metadata = family_data.get("metadata", {})
+        last_updated = metadata.get("updated_at", "Не указано")
+        if last_updated != "Не указано":
+            try:
+                dt = datetime.fromisoformat(last_updated)
+                last_updated = dt.strftime('%d.%m.%Y, %H:%M')
+            except:
+                pass
+        data_version = metadata.get("version", "—")
+        persons_count = len(persons)
 
-    # Получаем имена создателей
-    all_users = db_sess.query(User).all()
-    user_names_by_id = {str(user.id): user.name for user in all_users}
-    creator_name = user_names_by_id.get(family.creator, family.creator)
-
-    members_names = [user_names_by_id.get(member_id, member_id) for member_id in members]
-    editors = json.loads(family.editors) if family.editors else []
-    editors_names = [user_names_by_id.get(editor_id, editor_id) for editor_id in editors]
-
-    return render_template('family_page.html',
-                           family=family,
-                           creator_name=creator_name,
-                           members_names=members_names,
-                           editors_names=editors_names,
-                           persons=persons)
-
+        return render_template('family_page.html',
+                               family=family,
+                               creator_name=creator_name,
+                               members_names=members_names,
+                               editors_names=editors_names,
+                               persons=persons,
+                               last_updated=last_updated,
+                               data_version=data_version,
+                               persons_count=persons_count,
+                               members_count=len(members))
+    finally:
+        db_sess.close()
 
 @families_bp.route('/<int:family_id>/history')
 @login_required
