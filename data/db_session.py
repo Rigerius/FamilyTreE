@@ -29,6 +29,12 @@ def check_and_migrate_db(db_file):
             conn.commit()
             print("Миграция успешно выполнена!")
 
+        if 'is_admin' not in columns:
+            print("Миграция: добавляем колонку is_admin в таблицу users...")
+            cursor.execute("ALTER TABLE users ADD COLUMN is_admin BOOLEAN")
+            conn.commit()
+            print("Миграция успешно выполнена!")
+
         conn.close()
     except Exception as e:
         print(f"Ошибка при миграции: {e}")
