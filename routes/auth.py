@@ -125,7 +125,6 @@ def profile():
 
 
 @auth_bp.route('/profile/<int:user_id>')
-@login_required
 def view_profile(user_id):
     """Просмотр профиля пользователя (своего или чужого)"""
     db_sess = db_session.create_session()
@@ -138,7 +137,10 @@ def view_profile(user_id):
             return redirect(url_for('index'))
 
         # Определяем, является ли этот профиль профилем текущего пользователя
-        is_owner = (user.id == current_user.id)
+        if current_user.is_authenticated:
+            is_owner = (user.id == current_user.id)
+        else:
+            is_owner = False
 
         # Функция для инициализации данных семьи
         def init_family_data(family):

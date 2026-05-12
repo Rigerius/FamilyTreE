@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request
 from flask_login import login_required, current_user
 from data import db_session
 from data.families import Family
@@ -11,6 +11,7 @@ from datetime import datetime, date
 import uuid
 from functions import init_family_data
 from utils.family_tree import *
+from utils.permissions import can_view_family, is_admin
 
 families_bp = Blueprint('families', __name__, url_prefix='/families')
 
@@ -102,55 +103,64 @@ def create_family():
 
 
 @families_bp.route('/<int:family_id>')
-@login_required
 def family_page(family_id):
+    """Страница просмотра семьи (администратор видит все)"""
     db_sess = db_session.create_session()
     try:
         family = db_sess.query(Family).filter(Family.id == family_id).first()
 
         if not family:
             flash('Семья не найдена', 'danger')
-            return redirect(url_for('families.my_families'))
+            return redirect(url_for('index'))
 
-        members = json.loads(family.members) if family.members else []
-        if str(current_user.id) not in members:
-            flash('У вас нет доступа к этой семье', 'danger')
-            return redirect(url_for('families.my_families'))
+        # Проверяем доступ с учётом прав администратора
+        if not can_view_family(family, current_user):
+            flash('Доступ запрещён. Эта семья является приватной.', 'danger')
+            return redirect(url_for('index'))
+
+        # Определяем права на редактирование
+        user_can_edit = False
+        is_member = False
+        is_creator = False
+        is_editor = False
+
+        if current_user.is_authenticated:
+            members = json.loads(family.members) if family.members else []
+            is_member = str(current_user.id) in members
+            editors = json.loads(family.editors) if family.editors else []
+            is_editor = str(current_user.id) in editors
+            is_creator = family.creator == str(current_user.id)
+            user_can_edit = is_creator or is_editor or is_member
+
+        admin_can_edit = is_admin()
 
         family_data = init_family_data(family)
         persons = family_data.get("persons", {})
 
-        # Получаем имена создателей
         all_users = db_sess.query(User).all()
         user_names_by_id = {str(user.id): user.name for user in all_users}
         creator_name = user_names_by_id.get(family.creator, family.creator)
 
         members_names = [user_names_by_id.get(member_id, member_id) for member_id in members]
-        editors = json.loads(family.editors) if family.editors else []
         editors_names = [user_names_by_id.get(editor_id, editor_id) for editor_id in editors]
-
-        # Определяем права
-        current_user_id_str = str(current_user.id)
-        is_creator = (family.creator == current_user_id_str)
-        is_editor = current_user_id_str in editors
-        user_can_edit = is_creator or is_editor
 
         return render_template('family_page.html',
                                family=family,
+                               persons=persons,
                                creator_name=creator_name,
                                members_names=members_names,
                                editors_names=editors_names,
-                               persons=persons,
-                               user_can_edit=user_can_edit,
+                               user_can_edit=user_can_edit or admin_can_edit,
                                is_creator=is_creator,
                                is_editor=is_editor,
-                               is_public=family.status)
+                               is_member=is_member,
+                               is_public=family.status,
+                               is_admin=is_admin())
     finally:
         db_sess.close()
 
 
 @families_bp.route('/<int:family_id>/history')
-@login_required
 def family_history(family_id):
     """Страница истории изменений семьи"""
     db_sess = db_session.create_session()
@@ -159,12 +169,18 @@ def family_history(family_id):
 
         if not family:
             flash('Семья не найдена', 'danger')
-            return redirect(url_for('families.my_families'))
+            return redirect(url_for('my_families'))
 
         members = json.loads(family.members) if family.members else []
-        if str(current_user.id) not in members:
-            flash('У вас нет доступа к истории этой семьи', 'danger')
-            return redirect(url_for('families.family_page', family_id=family_id))
+        if current_user.is_authenticated:
+            if str(current_user.id) not in members:
+                if family.status == False:
+                    flash('У вас нет доступа к истории этой семьи', 'danger')
+                    return redirect(url_for('family_page', family_id=family_id))
+        else:
+            if family.status == False:
+                flash('У вас нет доступа к истории этой семьи', 'danger')
+                return redirect(url_for('family_page', family_id=family_id))
 
         # Получаем историю изменений
         history_records = db_sess.query(History).filter(
@@ -179,38 +195,41 @@ def family_history(family_id):
 
 
 @families_bp.route('/<int:family_id>/tree')
-@login_required
 def family_tree_view(family_id):
-    """Страница визуализации семейного дерева"""
+    """Страница семейного дерева (администратор видит все)"""
     db_sess = db_session.create_session()
     try:
         family = db_sess.query(Family).filter(Family.id == family_id).first()
 
         if not family:
             flash('Семья не найдена', 'danger')
-            return redirect(url_for('families.my_families'))
+            return redirect(url_for('index'))
 
-        members = json.loads(family.members) if family.members else []
-        if str(current_user.id) not in members:
-            flash('У вас нет доступа к этой семье', 'danger')
-            return redirect(url_for('families.family_page', family_id=family_id))
+        if not can_view_family(family, current_user):
+            flash('Доступ запрещён. Эта семья является приватной.', 'danger')
+            return redirect(url_for('index'))
 
-        family_data = init_family_data(family)
+        user_can_edit = False
+        if current_user.is_authenticated:
+            members = json.loads(family.members) if family.members else []
+            is_member = str(current_user.id) in members
+            user_can_edit = is_member or is_admin()
+
+        family_data = json.loads(family.data) if family.data else {}
         persons = family_data.get("persons", {})
 
-        # Генерируем дерево - ИСПРАВЛЕНО: используем tree_data вместо generate_tree()
         generator = FamilyTreeGenerator(persons, family.family_name)
-        tree_data = generator.tree_data
-
-        # Для разных форматов
-        chartjs_data = TreeVisualizationHelper.format_for_chartjs(tree_data)
+        tree_data = generator.to_visjs()
         text_tree = TreeVisualizationHelper.generate_family_text(generator)
+        chartjs_data = TreeVisualizationHelper.format_for_chartjs(generator.tree_data)
 
         return render_template('family_tree.html',
                                family=family,
                                tree_data=json.dumps(tree_data, ensure_ascii=False),
+                               text_tree=text_tree,
                                chartjs_data=chartjs_data,
-                               text_tree=text_tree)
+                               user_can_edit=user_can_edit,
+                               is_admin=is_admin())
     finally:
         db_sess.close()
 
@@ -218,7 +237,7 @@ def family_tree_view(family_id):
 @families_bp.route('/<int:family_id>/members')
 @login_required
 def family_members(family_id):
-    """Страница управления участниками"""
+    """Страница управления участниками семьи"""
     db_sess = db_session.create_session()
     try:
         family = db_sess.query(Family).filter(Family.id == family_id).first()
@@ -227,29 +246,37 @@ def family_members(family_id):
             flash('Семья не найдена', 'danger')
             return redirect(url_for('families.my_families'))
 
-        if family.creator != str(current_user.id):
-            flash('Только создатель может управлять участниками', 'danger')
+        # Проверяем доступ (только создатель может управлять участниками)
+        if not family.is_creator(current_user.id):
+            flash('Только создатель семьи может управлять участниками', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
-        members = json.loads(family.members) if family.members else []
-        editors = json.loads(family.editors) if family.editors else []
+        members = family.get_members_list()
+        editors = family.get_editors_list()
 
-        # Получаем информацию о всех пользователях
+        # Получаем имена пользователей
         all_users = db_sess.query(User).all()
         user_names_by_id = {str(user.id): user.name for user in all_users}
 
-        # Формируем список участников с информацией
         members_info = []
         for member_id in members:
             members_info.append({
                 'id': member_id,
-                'name': user_names_by_id.get(member_id, member_id),
-                'is_creator': member_id == family.creator,
+                'name': user_names_by_id.get(member_id, 'Неизвестно'),
+                'is_creator': family.is_creator(member_id),
                 'is_editor': member_id in editors
             })
 
-        # Пользователи, которых можно добавить
-        available_users = [user for user in all_users if str(user.id) not in members]
+        # Пользователи, которых можно добавить (не состоящие в семье)
+        existing_members = set(members)
+        available_users = []
+        for user in all_users:
+            if str(user.id) not in existing_members and user.id != current_user.id:
+                available_users.append({
+                    'id': user.id,
+                    'name': user.name,
+                    'email': user.email
+                })
 
         return render_template('family_members.html',
                                family=family,
@@ -271,47 +298,54 @@ def add_member(family_id):
             flash('Семья не найдена', 'danger')
             return redirect(url_for('families.my_families'))
 
-        if family.creator != str(current_user.id):
-            flash('Только создатель может добавлять участников', 'danger')
+        # Только создатель может добавлять участников
+        if not family.is_creator(current_user.id):
+            flash('Только создатель семьи может добавлять участников', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
         user_id = request.form.get('user_id')
-        role = request.form.get('role', 'member')
+        role = request.form.get('role', 'member')  # 'member' или 'editor'
 
         if not user_id:
-            flash('Выберите пользователя', 'danger')
+            flash('Не указан пользователь', 'danger')
             return redirect(url_for('families.family_members', family_id=family_id))
 
-        members = json.loads(family.members) if family.members else []
-        editors = json.loads(family.editors) if family.editors else []
+        user = db_sess.query(User).filter(User.id == int(user_id)).first()
+        if not user:
+            flash('Пользователь не найден', 'danger')
+            return redirect(url_for('families.family_members', family_id=family_id))
 
-        if user_id not in members:
-            members.append(user_id)
+        members = family.get_members_list()
+        editors = family.get_editors_list()
 
-        if role == 'editor' and user_id not in editors:
-            editors.append(user_id)
+        if str(user_id) in members:
+            flash(f'Пользователь {user.name} уже состоит в семье', 'warning')
+            return redirect(url_for('families.family_members', family_id=family_id))
+
+        # Добавляем участника
+        members.append(str(user_id))
+        if role == 'editor':
+            editors.append(str(user_id))
 
         family.members = json.dumps(members)
         family.editors = json.dumps(editors)
         db_sess.commit()
 
-        # Получаем имя добавленного пользователя
-        user = db_sess.query(User).filter(User.id == int(user_id)).first()
-        user_name = user.name if user else user_id
-
+        # Логируем добавление
         HistoryLogger.log_member_added(
             family_id=family_id,
             user_id=current_user.id,
             user_name=current_user.name,
-            new_member_name=user_name)
+            new_member_name=user.name
+        )
 
-        flash(f'Пользователь {user_name} добавлен в семью!', 'success')
+        flash(f'Пользователь {user.name} добавлен в семью с ролью "{role}"', 'success')
         return redirect(url_for('families.family_members', family_id=family_id))
     finally:
         db_sess.close()
 
 
-@families_bp.route('/<int:family_id>/remove_member/<user_id>')
+@families_bp.route('/<int:family_id>/remove_member/<int:user_id>')
 @login_required
 def remove_member(family_id, user_id):
     """Удаление участника из семьи"""
@@ -323,34 +357,41 @@ def remove_member(family_id, user_id):
             flash('Семья не найдена', 'danger')
             return redirect(url_for('families.my_families'))
 
-        if family.creator != str(current_user.id):
-            flash('Только создатель может удалять участников', 'danger')
+        # Только создатель может удалять участников
+        if not family.is_creator(current_user.id):
+            flash('Только создатель семьи может удалять участников', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
-        if user_id == family.creator:
-            flash('Нельзя удалить создателя семьи', 'danger')
+        # Нельзя удалить самого себя
+        if user_id == current_user.id:
+            flash('Вы не можете удалить себя из семьи', 'danger')
             return redirect(url_for('families.family_members', family_id=family_id))
 
-        members = json.loads(family.members) if family.members else []
-        editors = json.loads(family.editors) if family.editors else []
+        user = db_sess.query(User).filter(User.id == user_id).first()
+        user_name = user.name if user else f'ID {user_id}'
 
-        if user_id in members:
-            members.remove(user_id)
-        if user_id in editors:
-            editors.remove(user_id)
+        members = family.get_members_list()
+        editors = family.get_editors_list()
+
+        if str(user_id) not in members:
+            flash(f'Пользователь {user_name} не состоит в семье', 'warning')
+            return redirect(url_for('families.family_members', family_id=family_id))
+
+        members.remove(str(user_id))
+        if str(user_id) in editors:
+            editors.remove(str(user_id))
 
         family.members = json.dumps(members)
         family.editors = json.dumps(editors)
         db_sess.commit()
 
-        user = db_sess.query(User).filter(User.id == int(user_id)).first()
-        user_name = user.name if user else user_id
-
+        # Логируем удаление
         HistoryLogger.log_member_removed(
             family_id=family_id,
             user_id=current_user.id,
             user_name=current_user.name,
-            removed_member_name=user_name)
+            removed_member_name=user_name
+        )
 
         flash(f'Пользователь {user_name} удалён из семьи', 'success')
         return redirect(url_for('families.family_members', family_id=family_id))
@@ -358,10 +399,10 @@ def remove_member(family_id, user_id):
         db_sess.close()
 
 
-@families_bp.route('/<int:family_id>/change_role/<user_id>', methods=['POST'])
+@families_bp.route('/<int:family_id>/change_role/<int:user_id>', methods=['POST'])
 @login_required
 def change_role(family_id, user_id):
-    """Изменение роли участника"""
+    """Изменение роли участника (member/editor)"""
     db_sess = db_session.create_session()
     try:
         family = db_sess.query(Family).filter(Family.id == family_id).first()
@@ -370,22 +411,39 @@ def change_role(family_id, user_id):
             flash('Семья не найдена', 'danger')
             return redirect(url_for('families.my_families'))
 
-        if family.creator != str(current_user.id):
-            flash('Только создатель может изменять роли', 'danger')
+        # Только создатель может менять роли
+        if not family.is_creator(current_user.id):
+            flash('Только создатель семьи может менять роли участников', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
-        role = request.form.get('role', 'member')
-        editors = json.loads(family.editors) if family.editors else []
+        new_role = request.form.get('role')
+        if new_role not in ['member', 'editor']:
+            flash('Неверная роль', 'danger')
+            return redirect(url_for('families.family_members', family_id=family_id))
 
-        if role == 'editor' and user_id not in editors:
-            editors.append(user_id)
-        elif role == 'member' and user_id in editors:
-            editors.remove(user_id)
+        user = db_sess.query(User).filter(User.id == user_id).first()
+        if not user:
+            flash('Пользователь не найден', 'danger')
+            return redirect(url_for('families.family_members', family_id=family_id))
+
+        members = family.get_members_list()
+        editors = family.get_editors_list()
+
+        if str(user_id) not in members:
+            flash(f'Пользователь {user.name} не состоит в семье', 'warning')
+            return redirect(url_for('families.family_members', family_id=family_id))
+
+        if new_role == 'editor':
+            if str(user_id) not in editors:
+                editors.append(str(user_id))
+        else:  # member
+            if str(user_id) in editors:
+                editors.remove(str(user_id))
 
         family.editors = json.dumps(editors)
         db_sess.commit()
 
-        flash('Роль участника обновлена', 'success')
+        flash(f'Роль пользователя {user.name} изменена на "{new_role}"', 'success')
         return redirect(url_for('families.family_members', family_id=family_id))
     finally:
         db_sess.close()

@@ -92,8 +92,7 @@ def api_family_tree_json(family_id):
         persons = family_data.get("persons", {})
 
         generator = FamilyTreeGenerator(persons, family.family_name)
-        # ИСПРАВЛЕНО: используем tree_data вместо _build_tree()
-        tree_data = generator.tree_data
+        tree_data = generator._build_tree()
 
         return jsonify({
             "success": True,
