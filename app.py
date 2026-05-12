@@ -13,6 +13,7 @@ from routes.families import families_bp
 from routes.persons import persons_bp
 from routes.api import api_bp
 from routes.search import search_bp
+from routes.admin import admin_bp
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key_Family_TreE'
@@ -23,7 +24,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 
 # Потом инициализируем БД
-db_session.global_init("db/database.db")
+db_session.global_init("db/database_1.db")
 
 
 @login_manager.user_loader
@@ -36,12 +37,12 @@ def load_user(user_id):
         db_sess.close()
 
 
-# Только после всего этого регистрируем Blueprint'ы
 app.register_blueprint(auth_bp)
 app.register_blueprint(families_bp)
 app.register_blueprint(persons_bp)
 app.register_blueprint(api_bp)
 app.register_blueprint(search_bp)
+app.register_blueprint(admin_bp)
 
 
 def get_top_families(db_sess):
