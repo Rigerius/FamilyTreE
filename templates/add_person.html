@@ -11,7 +11,7 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST" id="addPersonForm">
+                    <form method="POST" id="addPersonForm" enctype="multipart/form-data">
                         {{ form.hidden_tag() }}
 
                         <!-- Основная информация -->
@@ -71,6 +71,23 @@
                         <div class="form-group mb-3">
                             <label>{{ form.biography.label }}</label>
                             {{ form.biography(class="form-control") }}
+                        </div>
+
+                        <!-- Поле для фотографии -->
+                        <div class="form-group mb-4">
+                            <label>{{ form.photo.label }}</label>
+                            <div id="photo-drop-area" style="border: 2px dashed #4eac60; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                                <i class="fas fa-camera fa-3x text-success mb-2"></i>
+                                <p class="mb-1">Перетащите фото сюда или кликните для выбора</p>
+                                <small class="text-muted">PNG, JPG, JPEG, GIF, WEBP до 5 МБ</small>
+                                {{ form.photo(class="form-control d-none", id="photo-input") }}
+                            </div>
+                            <div id="photo-preview" class="mt-3 text-center" style="display: none;">
+                                <img id="preview-img" src="#" alt="Предпросмотр" style="max-width: 150px; max-height: 150px; border-radius: 10px; object-fit: cover;">
+                                <button type="button" class="btn btn-sm btn-danger mt-2" id="remove-photo-btn">
+                                    <i class="fas fa-trash"></i> Удалить
+                                </button>
+                            </div>
                         </div>
 
                         <hr>
@@ -138,7 +155,6 @@
         const selected = Array.from(this.selectedOptions);
         if (selected.length > 2) {
             alert('Нельзя выбрать более 2 родителей!');
-            // Снимаем последний выбранный
             for (let i = 0; i < this.options.length; i++) {
                 if (this.options[i].selected && selected.indexOf(this.options[i]) === selected.length - 1) {
                     this.options[i].selected = false;
@@ -147,10 +163,82 @@
             }
         }
     });
+
+    // Drag & Drop для фото
+    const dropArea = document.getElementById('photo-drop-area');
+    const photoInput = document.getElementById('photo-input');
+    const photoPreview = document.getElementById('photo-preview');
+    const previewImg = document.getElementById('preview-img');
+    const removePhotoBtn = document.getElementById('remove-photo-btn');
+
+    if (dropArea) {
+        dropArea.addEventListener('click', () => photoInput.click());
+
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#2f8243';
+            dropArea.style.background = '#e8f5e9';
+        });
+
+        dropArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#4eac60';
+            dropArea.style.background = 'transparent';
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#4eac60';
+            dropArea.style.background = 'transparent';
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                photoInput.files = files;
+                handlePhotoFile(files[0]);
+            }
+        });
+    }
+
+    if (photoInput) {
+        photoInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handlePhotoFile(e.target.files[0]);
+            }
+        });
+    }
+
+    function handlePhotoFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Пожалуйста, выберите изображение!');
+            photoInput.value = '';
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Файл слишком большой! Максимальный размер: 5 МБ');
+            photoInput.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            photoPreview.style.display = 'block';
+            dropArea.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    if (removePhotoBtn) {
+        removePhotoBtn.addEventListener('click', () => {
+            photoInput.value = '';
+            photoPreview.style.display = 'none';
+            dropArea.style.display = 'block';
+        });
+    }
 </script>
 
 <style>
-    /* Стили для множественного выбора */
     select[multiple] {
         min-height: 120px;
     }
@@ -167,6 +255,15 @@
 
     select[multiple] option:hover {
         background-color: #e8f5e9;
+    }
+
+    #photo-drop-area {
+        transition: all 0.3s ease;
+    }
+
+    #photo-drop-area:hover {
+        border-color: #2f8243;
+        background: #f0f8ee;
     }
 </style>
 {% endblock %}

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from data import db_session
 from data.families import Family
@@ -7,10 +7,62 @@ from utils.history_logger import HistoryLogger
 import json
 from datetime import datetime, date
 import uuid
+import os
+import secrets
+from werkzeug.utils import secure_filename
 from functions import *
 from utils.family_tree import *
 
 persons_bp = Blueprint('persons', __name__, url_prefix='/persons')
+
+# Разрешенные расширения для фотографий
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+
+def allowed_file(filename):
+    """Проверка расширения файла"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def save_person_photo(form_photo):
+    """Сохраняет фото родственника"""
+    try:
+        if not form_photo or not form_photo.filename:
+            return None
+
+        # Проверяем расширение файла
+        if not allowed_file(form_photo.filename):
+            raise ValueError('Недопустимый формат файла. Разрешены: PNG, JPG, JPEG, GIF, WEBP')
+
+        # Генерируем уникальное имя файла
+        random_hex = secrets.token_hex(8)
+        _, f_ext = os.path.splitext(secure_filename(form_photo.filename))
+        photo_fn = random_hex + f_ext
+
+        # Путь для сохранения
+        photo_path = os.path.join(current_app.root_path, 'static/persons_photos', photo_fn)
+
+        # Создаем папку, если её нет
+        os.makedirs(os.path.dirname(photo_path), exist_ok=True)
+
+        # Сохраняем файл
+        form_photo.save(photo_path)
+
+        return f'/static/persons_photos/{photo_fn}'
+    except Exception as e:
+        print(f"Ошибка при сохранении фото: {e}")
+        raise
+
+
+def delete_person_photo(photo_path):
+    """Удаляет фото родственника"""
+    if photo_path:
+        full_path = os.path.join(current_app.root_path, photo_path.lstrip('/'))
+        if os.path.exists(full_path):
+            try:
+                os.remove(full_path)
+            except Exception as e:
+                print(f"Не удалось удалить фото: {e}")
 
 
 @persons_bp.route('/<int:family_id>/add_person', methods=['GET', 'POST'])
@@ -54,6 +106,14 @@ def add_person(family_id):
             death_date = form.death_date.data if form.death_date.data else None
             age = calculate_age(birth_date, death_date) if birth_date else None
 
+            # Сохраняем фото
+            photo_url = None
+            if form.photo.data and form.photo.data.filename:
+                try:
+                    photo_url = save_person_photo(form.photo.data)
+                except Exception as e:
+                    flash(f'Ошибка при загрузке фото: {str(e)}', 'warning')
+
             new_person = {
                 "id": person_id,
                 "full_name": form.full_name.data,
@@ -65,6 +125,7 @@ def add_person(family_id):
                 "birth_place": form.birth_place.data,
                 "death_place": form.death_place.data,
                 "biography": form.biography.data,
+                "photo": photo_url,
                 "spouses": [],
                 "parents": [],
                 "children": [],
@@ -204,6 +265,19 @@ def edit_person(family_id, person_id):
             death_date = form.death_date.data if form.death_date.data else None
             age = calculate_age(birth_date, death_date) if birth_date else None
 
+            # Обработка новой фотографии
+            if form.photo.data and form.photo.data.filename:
+                try:
+                    # Удаляем старую фотографию
+                    if person.get("photo"):
+                        delete_person_photo(person["photo"])
+                    # Сохраняем новую
+                    photo_url = save_person_photo(form.photo.data)
+                    person["photo"] = photo_url
+                    changed_fields.append("фотография")
+                except Exception as e:
+                    flash(f'Ошибка при загрузке фото: {str(e)}', 'warning')
+
             person["full_name"] = form.full_name.data
             person["gender"] = form.gender.data
             person["status"] = form.status.data
@@ -315,6 +389,10 @@ def delete_person(family_id, person_id):
             return redirect(url_for('families.family_page', family_id=family_id))
 
         person_name = person.get("full_name", person_id)
+
+        # Удаляем фото
+        if person.get("photo"):
+            delete_person_photo(person["photo"])
 
         # Удаляем связи
         for spouse_id in person.get("spouses", []):

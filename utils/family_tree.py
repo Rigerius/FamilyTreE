@@ -120,7 +120,8 @@ class FamilyTreeGenerator:
             "death_place": person.get("death_place"),
             "biography": person.get("biography", ""),
             "generation": generation,
-            "avatar": person.get("avatar"),
+            "avatar": person.get("photo"),  # Добавляем фото в узел дерева
+            "photo": person.get("photo"),   # Дублируем для совместимости
             "children_count": len(person.get("children", [])),
             "has_parents": len(person.get("parents", [])) > 0,
             "parents": person.get("parents", []),
@@ -255,6 +256,7 @@ class TreeVisualizationHelper:
                 "gender": node.get("gender", ""),
                 "lifespan": node.get("lifespan", ""),
                 "generation": node.get("generation", 0),
+                "photo": node.get("photo", ""),  # Добавляем фото
                 "children": children
             }
 

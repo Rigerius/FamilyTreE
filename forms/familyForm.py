@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import SubmitField, BooleanField, StringField, TextAreaField, SelectField, DateField, SelectMultipleField
 from wtforms.validators import DataRequired, Length, Optional
 
@@ -75,6 +76,12 @@ class AddPersonForm(FlaskForm):
         'Дополнительная информация',
         validators=[Optional(), Length(max=2000)],
         render_kw={"placeholder": "Биография, достижения...", "rows": 4}
+    )
+
+    # Поле для фотографии
+    photo = FileField(
+        'Фотография',
+        validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Только изображения!')]
     )
 
     # Раздельные поля для разных типов связей (можно заполнять все одновременно)
@@ -158,6 +165,12 @@ class EditPersonForm(FlaskForm):
         'Дополнительная информация',
         validators=[Optional(), Length(max=2000)],
         render_kw={"placeholder": "Биография, достижения...", "rows": 4}
+    )
+
+    # Поле для фотографии
+    photo = FileField(
+        'Новая фотография',
+        validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Только изображения!')]
     )
 
     # Поля для связей

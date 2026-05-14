@@ -24,7 +24,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 
 # Потом инициализируем БД
-db_session.global_init("db/database_1.db")
+db_session.global_init("db/database.db")
 
 
 @login_manager.user_loader

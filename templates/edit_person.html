@@ -11,7 +11,7 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST" id="editPersonForm">
+                    <form method="POST" id="editPersonForm" enctype="multipart/form-data">
                         {{ form.hidden_tag() }}
 
                         <!-- Основная информация -->
@@ -73,6 +73,33 @@
                             {{ form.biography(class="form-control") }}
                         </div>
 
+                        <!-- Текущая фотография -->
+                        {% if person.photo %}
+                        <div class="form-group mb-4">
+                            <label>Текущая фотография</label>
+                            <div class="text-center">
+                                <img src="{{ person.photo }}" alt="{{ person.full_name }}" style="max-width: 150px; max-height: 150px; border-radius: 10px; object-fit: cover;">
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Поле для новой фотографии -->
+                        <div class="form-group mb-4">
+                            <label>{{ form.photo.label }}</label>
+                            <div id="photo-drop-area" style="border: 2px dashed #f39c12; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                                <i class="fas fa-camera fa-3x text-warning mb-2"></i>
+                                <p class="mb-1">Перетащите новое фото сюда или кликните для выбора</p>
+                                <small class="text-muted">Оставьте пустым, чтобы не менять</small>
+                                {{ form.photo(class="form-control d-none", id="photo-input") }}
+                            </div>
+                            <div id="photo-preview" class="mt-3 text-center" style="display: none;">
+                                <img id="preview-img" src="#" alt="Предпросмотр" style="max-width: 150px; max-height: 150px; border-radius: 10px; object-fit: cover;">
+                                <button type="button" class="btn btn-sm btn-danger mt-2" id="remove-photo-btn">
+                                    <i class="fas fa-trash"></i> Удалить выбранное
+                                </button>
+                            </div>
+                        </div>
+
                         <hr>
                         <h5><i class="fas fa-link"></i> Семейные связи</h5>
                         <p class="text-muted small">Удерживайте Ctrl (Cmd) для выбора нескольких. Изменения связей автоматически обновятся у связанных родственников.</p>
@@ -132,7 +159,6 @@
         const selected = Array.from(parentsSelect.selectedOptions);
         if (selected.length > 2) {
             parentWarning.style.display = 'block';
-            // Снимаем последний выбранный
             for (let i = 0; i < parentsSelect.options.length; i++) {
                 if (parentsSelect.options[i].selected && selected.indexOf(parentsSelect.options[i]) === selected.length - 1) {
                     parentsSelect.options[i].selected = false;
@@ -145,6 +171,79 @@
     }
 
     parentsSelect.addEventListener('change', checkParentsCount);
+
+    // Drag & Drop для фото
+    const dropArea = document.getElementById('photo-drop-area');
+    const photoInput = document.getElementById('photo-input');
+    const photoPreview = document.getElementById('photo-preview');
+    const previewImg = document.getElementById('preview-img');
+    const removePhotoBtn = document.getElementById('remove-photo-btn');
+
+    if (dropArea) {
+        dropArea.addEventListener('click', () => photoInput.click());
+
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#e67e22';
+            dropArea.style.background = '#fff8f0';
+        });
+
+        dropArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#f39c12';
+            dropArea.style.background = 'transparent';
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#f39c12';
+            dropArea.style.background = 'transparent';
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                photoInput.files = files;
+                handlePhotoFile(files[0]);
+            }
+        });
+    }
+
+    if (photoInput) {
+        photoInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handlePhotoFile(e.target.files[0]);
+            }
+        });
+    }
+
+    function handlePhotoFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Пожалуйста, выберите изображение!');
+            photoInput.value = '';
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Файл слишком большой! Максимальный размер: 5 МБ');
+            photoInput.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            photoPreview.style.display = 'block';
+            dropArea.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    if (removePhotoBtn) {
+        removePhotoBtn.addEventListener('click', () => {
+            photoInput.value = '';
+            photoPreview.style.display = 'none';
+            dropArea.style.display = 'block';
+        });
+    }
 </script>
 
 <style>
@@ -164,6 +263,15 @@
 
     select[multiple] option:hover {
         background-color: #fff3e0;
+    }
+
+    #photo-drop-area {
+        transition: all 0.3s ease;
+    }
+
+    #photo-drop-area:hover {
+        border-color: #e67e22;
+        background: #fff8f0;
     }
 </style>
 {% endblock %}
