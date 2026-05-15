@@ -124,12 +124,10 @@ def family_page(family_id):
         is_creator = False
         is_editor = False
 
-        # Инициализируем members и editors ДО условного блока
-        members = json.loads(family.members) if family.members else []
-        editors = json.loads(family.editors) if family.editors else []
-
         if current_user.is_authenticated:
+            members = json.loads(family.members) if family.members else []
             is_member = str(current_user.id) in members
+            editors = json.loads(family.editors) if family.editors else []
             is_editor = str(current_user.id) in editors
             is_creator = family.creator == str(current_user.id)
             user_can_edit = is_creator or is_editor or is_member
@@ -160,6 +158,7 @@ def family_page(family_id):
                                is_admin=is_admin())
     finally:
         db_sess.close()
+
 
 @families_bp.route('/<int:family_id>/history')
 def family_history(family_id):
@@ -268,7 +267,7 @@ def family_members(family_id):
                 'is_editor': member_id in editors
             })
 
-        # Пользователи, которых можно добавить (не состоящие в семье)
+        # Пользователи, которых можно добавить
         existing_members = set(members)
         available_users = []
         for user in all_users:
@@ -305,7 +304,7 @@ def add_member(family_id):
             return redirect(url_for('families.family_page', family_id=family_id))
 
         user_id = request.form.get('user_id')
-        role = request.form.get('role', 'member')  # 'member' или 'editor'
+        role = request.form.get('role', 'member')
 
         if not user_id:
             flash('Не указан пользователь', 'danger')
@@ -363,7 +362,6 @@ def remove_member(family_id, user_id):
             flash('Только создатель семьи может удалять участников', 'danger')
             return redirect(url_for('families.family_page', family_id=family_id))
 
-        # Нельзя удалить самого себя
         if user_id == current_user.id:
             flash('Вы не можете удалить себя из семьи', 'danger')
             return redirect(url_for('families.family_members', family_id=family_id))
@@ -437,7 +435,7 @@ def change_role(family_id, user_id):
         if new_role == 'editor':
             if str(user_id) not in editors:
                 editors.append(str(user_id))
-        else:  # member
+        else:
             if str(user_id) in editors:
                 editors.remove(str(user_id))
 
