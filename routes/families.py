@@ -124,10 +124,12 @@ def family_page(family_id):
         is_creator = False
         is_editor = False
 
+        # Инициализируем members и editors ДО условного блока
+        members = json.loads(family.members) if family.members else []
+        editors = json.loads(family.editors) if family.editors else []
+
         if current_user.is_authenticated:
-            members = json.loads(family.members) if family.members else []
             is_member = str(current_user.id) in members
-            editors = json.loads(family.editors) if family.editors else []
             is_editor = str(current_user.id) in editors
             is_creator = family.creator == str(current_user.id)
             user_can_edit = is_creator or is_editor or is_member
@@ -158,7 +160,6 @@ def family_page(family_id):
                                is_admin=is_admin())
     finally:
         db_sess.close()
-
 
 @families_bp.route('/<int:family_id>/history')
 def family_history(family_id):
