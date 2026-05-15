@@ -4,32 +4,47 @@
 <div class="container">
     <div class="card shadow-sm rounded-4 mb-4">
         <div class="card-header text-white rounded-top-4" style="background: linear-gradient(135deg, #2f8243, #4eac60);">
-            <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-0">
                     <i class="fas fa-tree"></i> {{ family.family_name }}
                 </h2>
-                <div class="mt-2 mt-sm-0">
-                    <!-- Только для участников семьи (кнопки редактирования) -->
-                    {% if user_can_edit %}
-                        {% if is_creator %}
-                            <a href="{{ url_for('families.family_members', family_id=family.id) }}" class="btn btn-info mr-2">
-                                <i class="fas fa-users"></i> Участники
+
+                <!-- Выпадающее меню -->
+                <div class="dropdown">
+                    <button class="btn dropdown-toggle"
+                            type="button"
+                            id="dropdownMenuButton"
+                            data-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            style="color: white; background: transparent; border: none; font-size: 1.5rem;">
+                        ⋮
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                        {% if user_can_edit %}
+                            {% if is_creator %}
+                                <a class="dropdown-item" href="{{ url_for('families.family_members', family_id=family.id) }}">
+                                    <i class="fas fa-users mr-2"></i> Участники
+                                </a>
+                            {% endif %}
+                            <a class="dropdown-item" href="{{ url_for('families.family_history', family_id=family.id) }}">
+                                <i class="fas fa-history mr-2"></i> История
                             </a>
-                        {% endif %}
-                        <a href="{{ url_for('families.family_history', family_id=family.id) }}" class="btn btn-info mr-2">
-                            <i class="fas fa-history"></i> История
-                        </a>
-                        <a href="{{ url_for('persons.add_person', family_id=family.id) }}" class="btn btn-light">
-                            <i class="fas fa-user-plus"></i> Добавить родственника
-                        </a>
-                    {% else %}
-                        <!-- Для гостей (только просмотр истории, если семья публичная) -->
-                        {% if is_public %}
-                            <a href="{{ url_for('families.family_history', family_id=family.id) }}" class="btn btn-info mr-2">
-                                <i class="fas fa-history"></i> История
+                            <a class="dropdown-item" href="{{ url_for('persons.add_person', family_id=family.id) }}">
+                                <i class="fas fa-user-plus mr-2"></i> Добавить родственника
                             </a>
+                        {% else %}
+                            {% if is_public %}
+                                <a class="dropdown-item" href="{{ url_for('families.family_history', family_id=family.id) }}">
+                                    <i class="fas fa-history mr-2"></i> История
+                                </a>
+                            {% endif %}
                         {% endif %}
-                    {% endif %}
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ url_for('families.family_tree_view', family_id=family.id) }}">
+                            <i class="fas fa-tree mr-2"></i> Семейное дерево
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -52,8 +67,9 @@
         {% endif %}
 
         <div class="card-body">
+            <!-- Единый блок информации о семье -->
             <div class="row mb-4">
-                <div class="col-md-6">
+                <div class="col-12">
                     <h5><i class="fas fa-info-circle"></i> Информация о семье</h5>
                     <ul class="list-unstyled">
                         <li><strong>Создатель:</strong> {{ creator_name }}</li>
@@ -71,83 +87,96 @@
                                 Не указана
                             {% endif %}
                         </li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h5><i class="fas fa-users"></i> Участники</h5>
-                    <ul class="list-group">
-                        {% for member in members_names %}
-                            <li class="list-group-item">
-                                <i class="fas fa-user"></i> {{ member }}
-                                {% if member == creator_name %}
-                                    <span class="badge badge-primary ml-2">Создатель</span>
-                                {% endif %}
-                                {% if member in editors_names and member != creator_name %}
-                                    <span class="badge badge-info ml-2">Редактор</span>
-                                {% endif %}
-                            </li>
-                        {% endfor %}
+                        <li><strong>Количество родственников:</strong> {{ persons|length if persons else 0 }}</li>
+                        <li>
+                            <strong>Участники:</strong>
+                            <div class="mt-1">
+                                {% for member in members_names %}
+                                    <span class="badge badge-light mr-1 mb-1 p-2" style="border: 1px solid #dee2e6;">
+                                        <i class="fas fa-user mr-1"></i> {{ member }}
+                                        {% if member == creator_name %}
+                                            <span class="badge badge-primary ml-1">Создатель</span>
+                                        {% endif %}
+                                        {% if member in editors_names and member != creator_name %}
+                                            <span class="badge badge-info ml-1">Редактор</span>
+                                        {% endif %}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </li>
                     </ul>
                 </div>
             </div>
 
             <hr>
 
-            <h4 class="mb-3"><i class="fas fa-users"></i> Родственники</h4>
-            {% if persons %}
-                <div class="row">
-                    {% for person_id, person in persons.items() %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="mr-2">
-                                            {% if person.gender == 'male' %}
-                                                <i class="fas fa-mars fa-2x" style="color: #4eac60;"></i>
-                                            {% else %}
-                                                <i class="fas fa-venus fa-2x" style="color: #4eac60;"></i>
-                                            {% endif %}
-                                        </div>
-                                        <div>
-                                            <h5 class="card-title mb-0">{{ person.full_name }}</h5>
-                                            <small class="text-muted">
-                                                {% if person.status == 'living' %}
-                                                    <span class="badge badge-success">Живой</span>
+            <!-- Кнопка для показа/скрытия родственников -->
+            <button class="btn btn-outline-success btn-block mb-3"
+                    type="button"
+                    data-toggle="collapse"
+                    data-target="#relativesList"
+                    aria-expanded="false"
+                    aria-controls="relativesList">
+                <i class="fas fa-users mr-2"></i> Родственники
+            </button>
+
+            <div class="collapse" id="relativesList">
+                {% if persons %}
+                    <div class="row">
+                        {% for person_id, person in persons.items() %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="mr-2">
+                                                {% if person.gender == 'male' %}
+                                                    <i class="fas fa-mars fa-2x" style="color: #4eac60;"></i>
                                                 {% else %}
-                                                    <span class="badge badge-secondary">Умерший</span>
+                                                    <i class="fas fa-venus fa-2x" style="color: #4eac60;"></i>
                                                 {% endif %}
-                                            </small>
+                                            </div>
+                                            <div>
+                                                <h5 class="card-title mb-0">{{ person.full_name }}</h5>
+                                                <small class="text-muted">
+                                                    {% if person.status == 'living' %}
+                                                        <span class="badge badge-success">Живой</span>
+                                                    {% else %}
+                                                        <span class="badge badge-secondary">Умерший</span>
+                                                    {% endif %}
+                                                </small>
+                                            </div>
                                         </div>
+                                        <p class="card-text small">
+                                            {% if person.birth_date %}
+                                                <i class="fas fa-calendar-alt"></i> Род.: {{ person.birth_date[:10] }}<br>
+                                            {% endif %}
+                                            {% if person.age %}
+                                                <i class="fas fa-hourglass-half"></i> Возраст: {{ person.age }} лет<br>
+                                            {% endif %}
+                                            {% if person.birth_place %}
+                                                <i class="fas fa-map-marker-alt"></i> {{ person.birth_place }}
+                                            {% endif %}
+                                        </p>
+                                        <a href="{{ url_for('persons.person_detail', family_id=family.id, person_id=person_id) }}"
+                                           class="btn btn-sm btn-outline-success">
+                                            Подробнее
+                                        </a>
                                     </div>
-                                    <p class="card-text small">
-                                        {% if person.birth_date %}
-                                            <i class="fas fa-calendar-alt"></i> Род.: {{ person.birth_date[:10] }}<br>
-                                        {% endif %}
-                                        {% if person.age %}
-                                            <i class="fas fa-hourglass-half"></i> Возраст: {{ person.age }} лет<br>
-                                        {% endif %}
-                                        {% if person.birth_place %}
-                                            <i class="fas fa-map-marker-alt"></i> {{ person.birth_place }}
-                                        {% endif %}
-                                    </p>
-                                    <a href="{{ url_for('persons.person_detail', family_id=family.id, person_id=person_id) }}"
-                                       class="btn btn-sm btn-outline-success">
-                                        Подробнее
-                                    </a>
                                 </div>
                             </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="alert alert-info text-center">
-                    <i class="fas fa-info-circle"></i> Пока нет добавленных родственников.
-                    {% if user_can_edit %}
-                        <a href="{{ url_for('persons.add_person', family_id=family.id) }}" class="alert-link">Добавьте первого родственника!</a>
-                    {% endif %}
-                </div>
-            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle"></i> Пока нет добавленных родственников.
+                        {% if user_can_edit %}
+                            <a href="{{ url_for('persons.add_person', family_id=family.id) }}" class="alert-link">Добавьте первого родственника!</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
         </div>
+
         <div class="card-footer bg-white">
             <div class="d-flex justify-content-between">
                 <div>
@@ -160,11 +189,6 @@
                             <i class="fas fa-arrow-left"></i> На главную
                         </a>
                     {% endif %}
-                </div>
-                <div>
-                    <a href="{{ url_for('families.family_tree_view', family_id=family.id) }}" class="btn btn-outline-success">
-                        <i class="fas fa-tree"></i> Семейное дерево
-                    </a>
                 </div>
             </div>
         </div>
@@ -187,6 +211,32 @@
     }
     .badge-info {
         background-color: #17a2b8;
+    }
+
+    /* Стили для выпадающего меню */
+    .dropdown-toggle::after {
+        display: none !important;
+    }
+
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        border-radius: 10px;
+    }
+
+    .dropdown-item {
+        padding: 10px 20px;
+        transition: background-color 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background-color: #f0f8ee;
+        color: #2f8243;
+    }
+
+    .dropdown-item i {
+        width: 20px;
+        text-align: center;
     }
 </style>
 {% endblock %}
